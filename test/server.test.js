@@ -5,8 +5,8 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-process.env.LAVISH_AXI_HOST = "127.0.0.1";
-process.env.LAVISH_AXI_LINK_HOST = "127.0.0.1";
+process.env.CRUX_AXI_HOST = "127.0.0.1";
+process.env.CRUX_AXI_LINK_HOST = "127.0.0.1";
 
 import {
   allowsAllHosts,
@@ -88,7 +88,7 @@ test("server serves chrome browser behavior from a dedicated source file", async
   const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
 
   assert.match(source, /chrome-client\.js/);
-  assert.match(html, /<script id="lavish-session" type="application\/json">/);
+  assert.match(html, /<script id="crux-session" type="application\/json">/);
   assert.match(html, /<script src="\/chrome-client\.js"><\/script>/);
   assert.doesNotMatch(html, /<script>\s*const key=/);
 });
@@ -110,7 +110,7 @@ test("export content disposition uses a safe fallback and encoded UTF-8 filename
 });
 
 test("artifact assets resolve within the artifact directory", () => {
-  const root = path.resolve("/tmp/lavish-artifact");
+  const root = path.resolve("/tmp/crux-artifact");
 
   assert.equal(resolveArtifactAsset(root, "style.css"), path.join(root, "style.css"));
   assert.equal(resolveArtifactAsset(root, "../secret.txt"), null);
@@ -126,7 +126,7 @@ test("artifact SDK uses a custom annotation card instead of browser prompts", ()
   const js = createSdkJs("abc");
 
   assert.doesNotMatch(js, /window\.prompt/);
-  assert.match(js, /lavish-annotation-card/);
+  assert.match(js, /crux-annotation-card/);
   assert.match(js, /textarea/);
 });
 
@@ -136,20 +136,20 @@ test("artifact SDK script is valid JavaScript", () => {
   assert.doesNotThrow(() => new Function(js));
 });
 
-test("artifact SDK ignores Lavish-owned annotation UI", () => {
+test("artifact SDK ignores Crux-owned annotation UI", () => {
   const js = createSdkJs("abc");
 
-  assert.match(js, /function isLavishUi/);
-  assert.match(js, /closest\(["']\[data-lavish-ui\]["']\)/);
-  assert.match(js, /data-lavish-ui/);
+  assert.match(js, /function isCruxUi/);
+  assert.match(js, /closest\(["']\[data-crux-ui\]["']\)/);
+  assert.match(js, /data-crux-ui/);
 });
 
-test("artifact SDK isolates Lavish annotation UI in Shadow DOM", () => {
+test("artifact SDK isolates Crux annotation UI in Shadow DOM", () => {
   const js = createSdkJs("abc");
 
   assert.match(js, /attachShadow\(\{\s*mode:\s*["']open["'],?\s*\}\)/);
   assert.match(js, /:host\{all:initial/);
-  assert.match(js, /lavish-annotation-root/);
+  assert.match(js, /crux-annotation-root/);
 });
 
 test("annotation card does not block its own Queue button", () => {
@@ -216,7 +216,7 @@ test("annotation hover and click resolve to the same Mermaid node element", () =
 test("annotation mode forces the artifact cursor to default", () => {
   const js = createSdkJs("abc");
 
-  assert.match(js, /lavish-cursor-style/);
+  assert.match(js, /crux-cursor-style/);
   assert.match(js, /cursor:default!important/);
   assert.match(js, /setAnnotationMode\(enabled\)/);
 });
@@ -227,12 +227,12 @@ test("artifact SDK registers a capture-phase document keydown listener for the m
   assert.match(js, /const MODE_TOGGLE_HOTKEY_KEY="i"/);
   assert.match(js, /function isModeToggleHotkeyEvent\(event\)/);
   assert.match(js, /if \(!isModeToggleHotkeyEvent\(event\)\) return;/);
-  assert.match(js, /parent\.postMessage\(\{ type: "lavish:toggleAnnotationMode" \}, "\*"\);/);
+  assert.match(js, /parent\.postMessage\(\{ type: "crux:toggleAnnotationMode" \}, "\*"\);/);
   // Registered with the capture flag so it fires regardless of where focus is inside the
   // sandboxed artifact document, without a duplicate call sneaking in un-captured.
   assert.match(
     js,
-    /document\.addEventListener\(\s*"keydown",\s*\(event\) => \{\s*if \(!isModeToggleHotkeyEvent\(event\)\) return;\s*event\.preventDefault\(\);\s*parent\.postMessage\(\{ type: "lavish:toggleAnnotationMode" \}, "\*"\);\s*\},\s*true,?\s*\);/,
+    /document\.addEventListener\(\s*"keydown",\s*\(event\) => \{\s*if \(!isModeToggleHotkeyEvent\(event\)\) return;\s*event\.preventDefault\(\);\s*parent\.postMessage\(\{ type: "crux:toggleAnnotationMode" \}, "\*"\);\s*\},\s*true,?\s*\);/,
   );
 });
 
@@ -247,7 +247,7 @@ test("chrome client toggles annotation mode via Cmd/Ctrl+I and on request from t
   assert.match(js, /function isModeToggleHotkeyEvent\(event\)/);
   assert.match(js, /function toggleAnnotationMode\(\)/);
   assert.match(js, /annotationSwitch\.onclick = toggleAnnotationMode;/);
-  assert.match(js, /if \(msg\.type === "lavish:toggleAnnotationMode"\) toggleAnnotationMode\(\);/);
+  assert.match(js, /if \(msg\.type === "crux:toggleAnnotationMode"\) toggleAnnotationMode\(\);/);
   assert.match(
     js,
     /document\.addEventListener\(\s*"keydown",\s*\(event\) => \{\s*if \(!isModeToggleHotkeyEvent\(event\)\) return;\s*event\.preventDefault\(\);\s*toggleAnnotationMode\(\);\s*\},\s*true,?\s*\);/,
@@ -264,10 +264,10 @@ test("the annotate switch exposes the mode toggle hotkey as a discoverable toolt
 test("artifact SDK lets marked feedback controls handle their own clicks", () => {
   const js = createSdkJs("abc");
 
-  assert.match(js, /function isLavishAction/);
-  assert.match(js, /closest\(["']\[data-lavish-action\]["']\)/);
-  assert.match(js, /isLavishAction\(event\.target\)/);
-  assert.match(js, /\[data-lavish-action\],[^{}]*\[data-lavish-action\] \*\{cursor:pointer!important\}/);
+  assert.match(js, /function isCruxAction/);
+  assert.match(js, /closest\(["']\[data-crux-action\]["']\)/);
+  assert.match(js, /isCruxAction\(event\.target\)/);
+  assert.match(js, /\[data-crux-action\],[^{}]*\[data-crux-action\] \*\{cursor:pointer!important\}/);
 });
 
 test("artifact SDK lets native form controls handle their own clicks", () => {
@@ -319,7 +319,7 @@ test("annotation card title renders selected tag as an html element name", () =>
   assert.match(js, /"Annotate &lt;" \+ c\.tag \+ "&gt;"/);
 });
 
-test("annotation card shadow styles use Lavish design-system variables", () => {
+test("annotation card shadow styles use Crux design-system variables", () => {
   const js = createSdkJs("abc");
 
   assert.match(js, /--ink-900:#0f1115/);
@@ -348,7 +348,7 @@ test("annotate switch shows a brass track and ink knob when enabled", async () =
   assert.match(js, /annotationSwitch\.setAttribute\("aria-pressed", String\(annotation\)\)/);
 });
 
-test("chrome declares the Lavish design-system tokens", async () => {
+test("chrome declares the Crux design-system tokens", async () => {
   const css = await chromeCssSource();
 
   assert.match(css, /--ink-900:#0f1115/);
@@ -369,10 +369,10 @@ test("chrome declares the Lavish design-system tokens", async () => {
 test("artifact SDK uses design-token aliases for annotation highlight and shadow UI", () => {
   const js = createSdkJs("abc");
 
-  assert.match(js, /--lavish-accent:#f4c95d/);
-  assert.match(js, /--lavish-annotate-outline:2px solid var\(--lavish-accent\)/);
-  assert.match(js, /el\.style\.outline\s*=\s*["']var\(--lavish-annotate-outline,2px solid #f4c95d\)["']/);
-  assert.match(js, /el\.style\.outlineOffset\s*=\s*["']var\(--lavish-annotate-offset,2px\)["']/);
+  assert.match(js, /--crux-accent:#f4c95d/);
+  assert.match(js, /--crux-annotate-outline:2px solid var\(--crux-accent\)/);
+  assert.match(js, /el\.style\.outline\s*=\s*["']var\(--crux-annotate-outline,2px solid #f4c95d\)["']/);
+  assert.match(js, /el\.style\.outlineOffset\s*=\s*["']var\(--crux-annotate-offset,2px\)["']/);
   assert.match(js, /--fg-faint:var\(--steel-300\)/);
   assert.match(js, /textarea::placeholder\{color:var\(--fg-faint\)\}/);
   assert.doesNotMatch(js, /placeholder\{color:#aeb6c6\}/);
@@ -398,7 +398,7 @@ test("chrome top bar follows the design mock wordmark and overflow menu treatmen
   const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
   const css = await chromeCssSource();
 
-  assert.match(html, /class="brand-mark">Lavish/);
+  assert.match(html, /class="brand-mark">Crux/);
   assert.match(html, /class="brand-support">Editor/);
   assert.match(css, /font-family:var\(--font-serif\)/);
   assert.match(css, /letter-spacing:\.18em/);
@@ -495,7 +495,7 @@ test("overflow menu offers publishing an ht-ml.app link via a share dialog", asy
     html,
     /Publish to <a class="share-link" href="https:\/\/ht-ml\.app" target="_blank" rel="noopener noreferrer">ht-ml\.app<\/a>/,
   );
-  assert.match(html, /third-party hosting service, not part of Lavish/);
+  assert.match(html, /third-party hosting service, not part of Crux/);
   assert.match(html, /id="sharePassword"/);
   assert.match(html, /id="shareUpdateKey"/);
   assert.match(html, /Without a password, the page is PUBLIC/);
@@ -772,7 +772,7 @@ test("artifact SDK reports only stable severe layout failures after fonts, resiz
   assert.match(js, /activeAnimationTargets/);
   assert.match(js, /isAnimationAssociatedWithElement/);
   assert.match(js, /findStableLayoutFindings/);
-  assert.match(js, /type:\s*["']lavish:layoutWarnings["']/);
+  assert.match(js, /type:\s*["']crux:layoutWarnings["']/);
   assert.match(js, /page-horizontal-overflow/);
   assert.match(js, /clipped-text/);
   assert.match(js, /overlapping-text/);
@@ -817,10 +817,10 @@ test("artifact SDK reports its scroll position and restores it on request", () =
   const js = createSdkJs("abc");
 
   assert.match(js, /addEventListener\(\s*["']scroll["']/);
-  assert.match(js, /type:\s*["']lavish:scroll["']/);
+  assert.match(js, /type:\s*["']crux:scroll["']/);
   assert.match(js, /window\.scrollX/);
   assert.match(js, /window\.scrollY/);
-  assert.match(js, /msg\.type === ["']lavish:restoreScroll["']/);
+  assert.match(js, /msg\.type === ["']crux:restoreScroll["']/);
   assert.match(js, /window\.scrollTo\(/);
 });
 
@@ -828,12 +828,12 @@ test("chrome remembers the artifact scroll position across reloads", async () =>
   const js = await chromeClientSource();
 
   assert.match(js, /let lastScroll = \{ x: 0, y: 0 \}/);
-  assert.match(js, /msg\.type === ["']lavish:scroll["']/);
-  assert.match(js, /type:\s*["']lavish:restoreScroll["']/);
+  assert.match(js, /msg\.type === ["']crux:scroll["']/);
+  assert.match(js, /type:\s*["']crux:restoreScroll["']/);
   assert.match(js, /x:\s*lastScroll\.x,\s*y:\s*lastScroll\.y/);
 });
 
-test("chrome ignores Lavish postMessages not sent by the artifact iframe", async () => {
+test("chrome ignores Crux postMessages not sent by the artifact iframe", async () => {
   const js = await chromeClientSource();
 
   assert.match(js, /event\.source\s*!==\s*frame\.contentWindow/);
@@ -851,7 +851,7 @@ test("chrome waits for the replacement server before version-driven reload", asy
 test("chrome restores queued prompts from tab storage after reload", async () => {
   const js = await chromeClientSource();
 
-  assert.match(js, /lavish-axi:queued:/);
+  assert.match(js, /crux-axi:queued:/);
   assert.match(js, /function loadQueuedPrompts\(\)/);
   assert.match(js, /const queued = loadQueuedPrompts\(\)/);
   assert.match(js, /sessionStorage\.getItem\(queueStorageKey\)/);
@@ -888,7 +888,7 @@ test("chrome submits prompts queued during an in-flight submit", async () => {
 });
 
 test("/health reports the server version so clients can detect upgrades", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
     const res = await fetch(`http://127.0.0.1:${server.port}/health`);
@@ -902,7 +902,7 @@ test("/health reports the server version so clients can detect upgrades", async 
 });
 
 test("session URLs use the same IPv4 loopback host the server binds", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -923,7 +923,7 @@ test("session URLs use the same IPv4 loopback host the server binds", async () =
 });
 
 test("session URLs use the configured linkHost while binding to loopback", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({
@@ -949,7 +949,7 @@ test("session URLs use the configured linkHost while binding to loopback", async
 });
 
 test("session URLs can disable the layout gate for one open", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -963,7 +963,7 @@ test("session URLs can disable the layout gate for one open", async () => {
 
     assert.match(body.url, /[?&]no-gate=1/);
     const chrome = await (await fetch(body.url)).text();
-    assert.match(chrome, /<body class="lavish">/);
+    assert.match(chrome, /<body class="crux">/);
     assert.match(chrome, /id="layoutGateOverlay" hidden/);
     assert.match(chrome, /"layoutGateEnabled":false/);
   } finally {
@@ -1001,7 +1001,7 @@ function rawRequest(port, pathname, { method = "GET", host, headers = {}, body }
 }
 
 test("loopback server rejects forged non-loopback Host headers (DNS rebinding)", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body><h1>top secret</h1></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -1064,7 +1064,7 @@ test("loopback server rejects forged non-loopback Host headers (DNS rebinding)",
 });
 
 test("loopback server honors the configured link host but still rejects others", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({
     port: 0,
     stateFile: path.join(dir, "state.json"),
@@ -1088,7 +1088,7 @@ test("loopback server honors the configured link host but still rejects others",
 });
 
 test("server allows explicitly configured extra hosts and still rejects others", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({
     port: 0,
     stateFile: path.join(dir, "state.json"),
@@ -1111,7 +1111,7 @@ test("server allows explicitly configured extra hosts and still rejects others",
 });
 
 test("server validates X-Forwarded-Host so it works behind a reverse proxy", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({
     port: 0,
     stateFile: path.join(dir, "state.json"),
@@ -1140,7 +1140,7 @@ test("server validates X-Forwarded-Host so it works behind a reverse proxy", asy
 });
 
 test("a '*' entry in allowedHosts disables the Host guard entirely", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({
     port: 0,
     stateFile: path.join(dir, "state.json"),
@@ -1244,7 +1244,7 @@ test("allowsAllHosts detects the '*' opt-out sentinel", () => {
 });
 
 test("serve rejects fast when the bind host is unavailable", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   try {
     await assert.rejects(
       serve({
@@ -1264,8 +1264,8 @@ test("serve rejects fast when the bind host is unavailable", async () => {
 });
 
 test("/artifact serves files copied under the artifact directory", async () => {
-  const parent = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
-  const dir = path.join(parent, ".lavish");
+  const parent = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
+  const dir = path.join(parent, ".crux");
   const assetDir = path.join(dir, "assets");
   const artifact = path.join(dir, "artifact.html");
   await mkdir(dir);
@@ -1301,7 +1301,7 @@ test("/artifact serves files copied under the artifact directory", async () => {
 });
 
 test("layout warnings wake the same long-poll feedback channel as human prompts", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -1357,7 +1357,7 @@ test("layout warnings wake the same long-poll feedback channel as human prompts"
 });
 
 test("warning-only layout observations do not wake the long-poll feedback channel", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -1398,7 +1398,7 @@ test("warning-only layout observations do not wake the long-poll feedback channe
 });
 
 test("long-poll sends heartbeat bytes before feedback arrives", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({
@@ -1445,7 +1445,7 @@ test("long-poll sends heartbeat bytes before feedback arrives", async () => {
 });
 
 test("/chrome-client.js serves the extracted chrome client script", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
     const res = await fetch(`http://127.0.0.1:${server.port}/chrome-client.js`);
@@ -1462,7 +1462,7 @@ test("/chrome-client.js serves the extracted chrome client script", async () => 
 });
 
 test("/chrome.css serves the extracted chrome stylesheet", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
     const res = await fetch(`http://127.0.0.1:${server.port}/chrome.css`);
@@ -1482,7 +1482,7 @@ test("/chrome.css serves the extracted chrome stylesheet", async () => {
 });
 
 test("/design serves local Tailwind and DaisyUI artifact assets", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
     const base = `http://127.0.0.1:${server.port}`;
@@ -1511,7 +1511,7 @@ test("design asset resolver only trusts exact packaged design asset paths", () =
 });
 
 test("GET /api/:key/export inlines local assets and leaves remote references intact", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(
     artifact,
@@ -1550,7 +1550,7 @@ test("GET /api/:key/export inlines local assets and leaves remote references int
 });
 
 test("GET /api/:key/export sends a safe download filename header", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "résumé draft.html");
   await writeFile(artifact, "<!doctype html><html><body><h1>Hi</h1></body></html>");
 
@@ -1578,7 +1578,7 @@ test("GET /api/:key/export sends a safe download filename header", async () => {
 });
 
 test("GET /api/:key/export reports unresolved local asset warning count", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, '<!doctype html><html><body><img src="missing.png"></body></html>');
 
@@ -1596,9 +1596,9 @@ test("GET /api/:key/export reports unresolved local asset warning count", async 
     const body = await exportRes.text();
 
     assert.equal(exportRes.status, 200);
-    assert.equal(exportRes.headers.get("x-lavish-export-warning-count"), "1");
-    assert.equal(exportRes.headers.get("x-lavish-export-notice-count"), "0");
-    assert.equal(exportRes.headers.get("x-lavish-export-warnings"), null);
+    assert.equal(exportRes.headers.get("x-crux-export-warning-count"), "1");
+    assert.equal(exportRes.headers.get("x-crux-export-notice-count"), "0");
+    assert.equal(exportRes.headers.get("x-crux-export-warnings"), null);
     assert.match(body, /<img src="missing\.png">/);
   } finally {
     await server.close();
@@ -1607,7 +1607,7 @@ test("GET /api/:key/export reports unresolved local asset warning count", async 
 });
 
 test("GET /api/:key/export counts notices separately from unresolved assets", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(
     artifact,
@@ -1628,8 +1628,8 @@ test("GET /api/:key/export counts notices separately from unresolved assets", as
     const body = await exportRes.text();
 
     assert.equal(exportRes.status, 200);
-    assert.equal(exportRes.headers.get("x-lavish-export-warning-count"), "0");
-    assert.equal(exportRes.headers.get("x-lavish-export-notice-count"), "1");
+    assert.equal(exportRes.headers.get("x-crux-export-warning-count"), "0");
+    assert.equal(exportRes.headers.get("x-crux-export-notice-count"), "1");
     assert.match(body, /Content-Security-Policy/);
   } finally {
     await server.close();
@@ -1638,7 +1638,7 @@ test("GET /api/:key/export counts notices separately from unresolved assets", as
 });
 
 test("GET /api/:key/export returns 404 for an unknown session", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
     const res = await fetch(`http://127.0.0.1:${server.port}/api/does-not-exist/export`);
@@ -1650,7 +1650,7 @@ test("GET /api/:key/export returns 404 for an unknown session", async () => {
 });
 
 test("POST /api/:key/share publishes the local-inlined artifact to ht-ml.app", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(
     artifact,
@@ -1662,8 +1662,8 @@ test("POST /api/:key/share publishes the local-inlined artifact to ht-ml.app", a
 
   const requests = [];
   const htmlApp = await startFakeHtmlApp(requests);
-  const previousApiUrl = process.env.LAVISH_AXI_HTML_APP_API_URL;
-  process.env.LAVISH_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
+  const previousApiUrl = process.env.CRUX_AXI_HTML_APP_API_URL;
+  process.env.CRUX_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
 
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
@@ -1700,20 +1700,20 @@ test("POST /api/:key/share publishes the local-inlined artifact to ht-ml.app", a
   } finally {
     await server.close();
     await htmlApp.close();
-    restoreEnv("LAVISH_AXI_HTML_APP_API_URL", previousApiUrl);
+    restoreEnv("CRUX_AXI_HTML_APP_API_URL", previousApiUrl);
     await rm(dir, { recursive: true, force: true });
   }
 });
 
 test("POST /api/:key/share returns unresolved local asset warnings", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, '<!doctype html><html><body><img src="missing.png"><h1>Ship</h1></body></html>');
 
   const requests = [];
   const htmlApp = await startFakeHtmlApp(requests);
-  const previousApiUrl = process.env.LAVISH_AXI_HTML_APP_API_URL;
-  process.env.LAVISH_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
+  const previousApiUrl = process.env.CRUX_AXI_HTML_APP_API_URL;
+  process.env.CRUX_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
 
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
@@ -1745,20 +1745,20 @@ test("POST /api/:key/share returns unresolved local asset warnings", async () =>
   } finally {
     await server.close();
     await htmlApp.close();
-    restoreEnv("LAVISH_AXI_HTML_APP_API_URL", previousApiUrl);
+    restoreEnv("CRUX_AXI_HTML_APP_API_URL", previousApiUrl);
     await rm(dir, { recursive: true, force: true });
   }
 });
 
 test("POST /api/:key/share rejects cross-origin browser requests", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><title>x</title><h1>Private</h1>\n");
 
   const requests = [];
   const htmlApp = await startFakeHtmlApp(requests);
-  const previousApiUrl = process.env.LAVISH_AXI_HTML_APP_API_URL;
-  process.env.LAVISH_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
+  const previousApiUrl = process.env.CRUX_AXI_HTML_APP_API_URL;
+  process.env.CRUX_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
 
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
@@ -1783,20 +1783,20 @@ test("POST /api/:key/share rejects cross-origin browser requests", async () => {
   } finally {
     await server.close();
     await htmlApp.close();
-    restoreEnv("LAVISH_AXI_HTML_APP_API_URL", previousApiUrl);
+    restoreEnv("CRUX_AXI_HTML_APP_API_URL", previousApiUrl);
     await rm(dir, { recursive: true, force: true });
   }
 });
 
 test("POST /api/:key/share rejects requests without provenance headers", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><title>x</title><h1>Private</h1>\n");
 
   const requests = [];
   const htmlApp = await startFakeHtmlApp(requests);
-  const previousApiUrl = process.env.LAVISH_AXI_HTML_APP_API_URL;
-  process.env.LAVISH_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
+  const previousApiUrl = process.env.CRUX_AXI_HTML_APP_API_URL;
+  process.env.CRUX_AXI_HTML_APP_API_URL = `http://127.0.0.1:${htmlApp.port}`;
 
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
@@ -1821,13 +1821,13 @@ test("POST /api/:key/share rejects requests without provenance headers", async (
   } finally {
     await server.close();
     await htmlApp.close();
-    restoreEnv("LAVISH_AXI_HTML_APP_API_URL", previousApiUrl);
+    restoreEnv("CRUX_AXI_HTML_APP_API_URL", previousApiUrl);
     await rm(dir, { recursive: true, force: true });
   }
 });
 
 test("POST /shutdown stops the listener so the client can spawn a fresh server", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
   try {
     const res = await fetch(`http://127.0.0.1:${server.port}/shutdown`, { method: "POST" });
@@ -1841,13 +1841,13 @@ test("POST /shutdown stops the listener so the client can spawn a fresh server",
 
 test("resolveIdleTimeoutMs defaults, parses, and only explicit opt-outs disable", () => {
   assert.equal(resolveIdleTimeoutMs({}), 30 * 60_000);
-  assert.equal(resolveIdleTimeoutMs({ LAVISH_AXI_IDLE_TIMEOUT_MS: "" }), 30 * 60_000);
-  assert.equal(resolveIdleTimeoutMs({ LAVISH_AXI_IDLE_TIMEOUT_MS: "5000" }), 5000);
-  assert.equal(resolveIdleTimeoutMs({ LAVISH_AXI_IDLE_TIMEOUT_MS: "0" }), null);
-  assert.equal(resolveIdleTimeoutMs({ LAVISH_AXI_IDLE_TIMEOUT_MS: "off" }), null);
-  assert.equal(resolveIdleTimeoutMs({ LAVISH_AXI_IDLE_TIMEOUT_MS: "-1" }), 30 * 60_000);
-  assert.equal(resolveIdleTimeoutMs({ LAVISH_AXI_IDLE_TIMEOUT_MS: "30000ms" }), 30 * 60_000);
-  assert.equal(resolveIdleTimeoutMs({ LAVISH_AXI_IDLE_TIMEOUT_MS: "later" }), 30 * 60_000);
+  assert.equal(resolveIdleTimeoutMs({ CRUX_AXI_IDLE_TIMEOUT_MS: "" }), 30 * 60_000);
+  assert.equal(resolveIdleTimeoutMs({ CRUX_AXI_IDLE_TIMEOUT_MS: "5000" }), 5000);
+  assert.equal(resolveIdleTimeoutMs({ CRUX_AXI_IDLE_TIMEOUT_MS: "0" }), null);
+  assert.equal(resolveIdleTimeoutMs({ CRUX_AXI_IDLE_TIMEOUT_MS: "off" }), null);
+  assert.equal(resolveIdleTimeoutMs({ CRUX_AXI_IDLE_TIMEOUT_MS: "-1" }), 30 * 60_000);
+  assert.equal(resolveIdleTimeoutMs({ CRUX_AXI_IDLE_TIMEOUT_MS: "30000ms" }), 30 * 60_000);
+  assert.equal(resolveIdleTimeoutMs({ CRUX_AXI_IDLE_TIMEOUT_MS: "later" }), 30 * 60_000);
 });
 
 async function expectDoneWithin(server, ms) {
@@ -1863,7 +1863,7 @@ async function expectDoneWithin(server, ms) {
 }
 
 test("server shuts itself down after the idle timeout with no connections", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const server = await serve({
     port: 0,
     stateFile: path.join(dir, "state.json"),
@@ -1880,7 +1880,7 @@ test("server shuts itself down after the idle timeout with no connections", asyn
 });
 
 test("an open SSE connection keeps the server alive past the idle timeout", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({
@@ -1916,7 +1916,7 @@ test("an open SSE connection keeps the server alive past the idle timeout", asyn
 });
 
 test("ending the last open session shuts the server down", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -1941,7 +1941,7 @@ test("ending the last open session shuts the server down", async () => {
 });
 
 test("ending one of several sessions keeps the server running", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const first = path.join(dir, "first.html");
   const second = path.join(dir, "second.html");
   await writeFile(first, "<!doctype html><html><body>1</body></html>");
@@ -1972,7 +1972,7 @@ test("ending one of several sessions keeps the server running", async () => {
 });
 
 test("a user-initiated end via the keyed route blocks a plain reopen but honors reopen: true", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   // A second, never-ended session keeps the server from self-shutting-down once the first
   // session ends with nothing connected, so the later fetches below have a server to hit.
@@ -2029,7 +2029,7 @@ test("a user-initiated end via the keyed route blocks a plain reopen but honors 
 });
 
 test("an agent cleanup after a user end still blocks a plain reopen", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   const keepAlive = path.join(dir, "keep-alive.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
@@ -2078,7 +2078,7 @@ test("an agent cleanup after a user end still blocks a plain reopen", async () =
 });
 
 test("an agent-initiated end via the file-based route reopens normally without the reopen flag", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   // A second, never-ended session keeps the server from self-shutting-down once the first
   // session ends with nothing connected, so the later fetches below have a server to hit.
@@ -2099,7 +2099,7 @@ test("an agent-initiated end via the file-based route reopens normally without t
       body: JSON.stringify({ file: artifact }),
     });
 
-    // `lavish-axi end <file>` uses the file-based route - agent-initiated.
+    // `crux-axi end <file>` uses the file-based route - agent-initiated.
     await fetch(`${base}/api/end`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -2123,7 +2123,7 @@ test("an agent-initiated end via the file-based route reopens normally without t
 });
 
 test("poll on an ended session reports who ended it", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   // A second, never-ended session keeps the server from self-shutting-down once the first
   // session ends with nothing connected, so the poll below has a server to hit.
@@ -2158,7 +2158,7 @@ test("poll on an ended session reports who ended it", async () => {
 });
 
 test("send-and-end prompt submissions wake active polls with ended attribution", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2207,7 +2207,7 @@ test("send-and-end prompt submissions wake active polls with ended attribution",
 });
 
 test("SSE agent-presence reflects waiting, listening, and working transitions", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await (await import("node:fs/promises")).writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2283,7 +2283,7 @@ test("SSE agent-presence reflects waiting, listening, and working transitions", 
 });
 
 test("SSE handshake reports waiting on a fresh session that never had a poll", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await (await import("node:fs/promises")).writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2318,7 +2318,7 @@ test("SSE handshake reports waiting on a fresh session that never had a poll", a
 });
 
 test("SSE agent-presence returns to waiting when a poll times out without feedback", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2349,7 +2349,7 @@ test("SSE agent-presence returns to waiting when a poll times out without feedba
 });
 
 test("SSE agent-presence returns to waiting when a poll disconnects without feedback", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2384,7 +2384,7 @@ test("SSE agent-presence returns to waiting when a poll disconnects without feed
 });
 
 test("SSE agent-presence returns to waiting when poll feedback storage fails", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   const stateFile = path.join(dir, "state.json");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
@@ -2435,7 +2435,7 @@ test("heartbeat long-poll errors close the stream without Express error handling
 });
 
 test("SSE agent-presence switches to working when poll immediately takes queued feedback", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await (await import("node:fs/promises")).writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2510,7 +2510,7 @@ test("SSE agent-presence switches to working when poll immediately takes queued 
 });
 
 test("SSE agent-presence resets to waiting after ending and reopening a session", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2558,7 +2558,7 @@ test("SSE agent-presence resets to waiting after ending and reopening a session"
 });
 
 test("SSE agent-presence returns to waiting after an agent reply", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2601,7 +2601,7 @@ test("SSE agent-presence returns to waiting after an agent reply", async () => {
 });
 
 test("SSE agent-presence stays working when resuming an open session", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
@@ -2641,20 +2641,17 @@ test("SSE agent-presence stays working when resuming an open session", async () 
 
 test("hasLiveReloadRootOptIn detects the data attribute and meta opt-in", () => {
   assert.equal(hasLiveReloadRootOptIn("<html><body></body></html>"), false);
-  assert.equal(hasLiveReloadRootOptIn(`<html data-lavish-live-reload-root><body></body></html>`), true);
-  assert.equal(
-    hasLiveReloadRootOptIn(`<html><head><meta name="lavish-live-reload" content="root"></head></html>`),
-    true,
-  );
+  assert.equal(hasLiveReloadRootOptIn(`<html data-crux-live-reload-root><body></body></html>`), true);
+  assert.equal(hasLiveReloadRootOptIn(`<html><head><meta name="crux-live-reload" content="root"></head></html>`), true);
 });
 
 test("hasLiveReloadRootOptIn ignores commented and text data attribute mentions", () => {
-  assert.equal(hasLiveReloadRootOptIn(`<!-- <html data-lavish-live-reload-root> -->`), false);
-  assert.equal(hasLiveReloadRootOptIn(`<html><body><code>data-lavish-live-reload-root</code></body></html>`), false);
+  assert.equal(hasLiveReloadRootOptIn(`<!-- <html data-crux-live-reload-root> -->`), false);
+  assert.equal(hasLiveReloadRootOptIn(`<html><body><code>data-crux-live-reload-root</code></body></html>`), false);
 });
 
 test("resolveWatchTarget defaults to the artifact file so large sibling trees aren't scanned", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-watch-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-watch-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   try {
@@ -2666,10 +2663,10 @@ test("resolveWatchTarget defaults to the artifact file so large sibling trees ar
   }
 });
 
-test("resolveWatchTarget upgrades to the artifact directory when data-lavish-live-reload-root opts in", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-watch-"));
+test("resolveWatchTarget upgrades to the artifact directory when data-crux-live-reload-root opts in", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-watch-"));
   const artifact = path.join(dir, "artifact.html");
-  await writeFile(artifact, `<!doctype html><html data-lavish-live-reload-root><body></body></html>`);
+  await writeFile(artifact, `<!doctype html><html data-crux-live-reload-root><body></body></html>`);
   try {
     const target = await resolveWatchTarget({ file: artifact, key: "abc" });
     assert.equal(target.path, dir);
@@ -2682,14 +2679,14 @@ test("resolveWatchTarget upgrades to the artifact directory when data-lavish-liv
 
 test("resolveWatchTarget falls back to file-only when the artifact can't be read", async () => {
   const target = await resolveWatchTarget({
-    file: path.join(tmpdir(), `lavish-missing-artifact-${process.hrtime.bigint()}.html`),
+    file: path.join(tmpdir(), `crux-missing-artifact-${process.hrtime.bigint()}.html`),
     key: "abc",
   });
   assert.equal(target.scope, "file");
 });
 
 test("concurrent same-session opens create only one file watcher", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-watch-race-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-watch-race-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body>race</body></html>");
   const key = sessionKey(artifact);
@@ -2734,7 +2731,7 @@ test("concurrent same-session opens create only one file watcher", async () => {
 });
 
 test("/health and / stay responsive after opening two back-to-back sessions", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-back-to-back-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-back-to-back-"));
   const a = path.join(dir, "a.html");
   const b = path.join(dir, "b.html");
   await writeFile(a, "<!doctype html><html><body>a</body></html>");
@@ -2780,7 +2777,7 @@ test("/health and / stay responsive after opening two back-to-back sessions", as
 });
 
 test("server debug logger receives session and watcher lifecycle events", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-debug-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-debug-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
   const loggedArtifact = await canonicalFile(artifact);
@@ -2838,7 +2835,7 @@ test("layout gate curtain reuses the ended overlay card styling", async () => {
   const js = await chromeClientSource();
   const css = await chromeCssSource();
 
-  assert.match(html, /<body class="lavish layout-gate-active">/);
+  assert.match(html, /<body class="crux layout-gate-active">/);
   assert.match(
     html,
     /<iframe id="artifact" sandbox="allow-scripts allow-forms allow-popups allow-downloads" data-artifact-src="\/artifact\/abc\/index\.html"><\/iframe>/,
@@ -2851,7 +2848,7 @@ test("layout gate curtain reuses the ended overlay card styling", async () => {
   assert.match(css, /body\.layout-gate-active iframe#artifact\{[^}]*opacity:0/);
   assert.match(css, /\.ended-action\{[^}]*margin-top:var\(--space-8\)/);
   assert.match(js, /layoutGateAction\.onclick = \(\) => forceRevealLayoutGate\("manual"\)/);
-  assert.match(noGateHtml, /<body class="lavish">/);
+  assert.match(noGateHtml, /<body class="crux">/);
   assert.match(noGateHtml, /id="layoutGateOverlay" hidden/);
   assert.match(noGateHtml, /"layoutGateEnabled":false/);
 });
@@ -2870,9 +2867,9 @@ test("annotation card queues and sends immediately on Ctrl+Enter or Cmd+Enter", 
 
   assert.match(js, /event\.ctrlKey \|\| event\.metaKey/);
   assert.match(js, /sendQueuedPrompts\(\)/);
-  assert.match(js, /class="lavish-hint"/);
+  assert.match(js, /class="crux-hint"/);
   assert.match(js, /\+Enter to send now/);
-  assert.match(js, /\.lavish-annotation-card \.lavish-hint\{/);
+  assert.match(js, /\.crux-annotation-card \.crux-hint\{/);
 });
 
 test("chrome client chat input sends on Enter and inserts newline on Shift+Enter", async () => {
@@ -2928,7 +2925,7 @@ test("chrome falls back to a default favicon and title when none are provided", 
   const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
 
   assert.match(html, /<link rel="icon" href="data:image\/svg\+xml,/);
-  assert.match(html, /<title>Lavish Editor<\/title>/);
+  assert.match(html, /<title>Crux Editor<\/title>/);
 });
 
 test("chrome adopts a favicon tag and tab title passed from the artifact", () => {
@@ -2936,11 +2933,11 @@ test("chrome adopts a favicon tag and tab title passed from the artifact", () =>
     '<link rel="icon" href="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\'><text>🗂️</text></svg>">';
   const html = createChromeHtml(
     { key: "abc", file: "/tmp/artifact.html" },
-    { faviconTag, title: "Project Board · Lavish" },
+    { faviconTag, title: "Project Board · Crux" },
   );
 
   assert.ok(html.includes(faviconTag), "artifact favicon tag is injected verbatim");
-  assert.match(html, /<title>Project Board · Lavish<\/title>/);
+  assert.match(html, /<title>Project Board · Crux<\/title>/);
 });
 
 test("chrome tab title from the artifact is HTML-escaped", () => {

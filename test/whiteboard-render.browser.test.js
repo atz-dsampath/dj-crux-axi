@@ -64,7 +64,7 @@ test("real Excalidraw rendering keeps loaded-font labels inside their text bound
     t.skip("Chrome or Chromium is required for the real-render regression");
     return;
   }
-  const root = await mkdtemp(path.join(os.tmpdir(), "lavish-excalidraw-render-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "crux-excalidraw-render-"));
   try {
     await esbuild.build({
       entryPoints: [path.join(projectRoot, "test/fixtures/excalidraw-label-clipping.browser.jsx")],

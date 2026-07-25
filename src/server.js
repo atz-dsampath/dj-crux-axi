@@ -13,7 +13,7 @@ import {
   classifySevereTextOverflow,
   classifyMaterialRectEscape,
   createArtifactSdk,
-  deriveLavishQueueKey,
+  deriveCruxQueueKey,
   findStableLayoutFindings,
   isMaterialPageOverflow,
   isModeToggleHotkeyEvent,
@@ -37,7 +37,7 @@ import {
   splitExportWarnings,
 } from "./export-bundle.js";
 import { publishToHtmlApp } from "./html-app.js";
-import { injectLavishSdk } from "./html-transform.js";
+import { injectCruxSdk } from "./html-transform.js";
 import { bindHost, extraAllowedHosts, hostForUrl, IPV6_LOOPBACK_HOST, linkHost, LOOPBACK_HOST } from "./paths.js";
 import { canonicalFile, SessionStore, sessionKey } from "./session-store.js";
 
@@ -66,7 +66,7 @@ const WHITEBOARD_CHANNEL_TOKEN_TTL_MS = 5 * 60_000;
 
 // The whiteboard frame bundle (Excalidraw + Mermaid converter + React) is
 // produced by `scripts/build.js` into dist/whiteboard. Packaged runs find it
-// next to the served bundle; source runs (node bin/lavish-axi.js) fall back to
+// next to the served bundle; source runs (node bin/crux-axi.js) fall back to
 // the repo's dist output, so `pnpm run build` must have run at least once.
 export function defaultWhiteboardAssetsDir() {
   const packaged = fileURLToPath(new URL("./whiteboard", import.meta.url));
@@ -101,11 +101,11 @@ export function isValidWhiteboardChannelToken(token, secret, now = Date.now()) {
 
 // A detached server should not live forever. When no browser chrome (SSE) and no agent poll
 // are connected for this long, the server shuts itself down so it stops dangling. The next
-// `lavish-axi <file>` invocation re-spawns a fresh server and adopts resumable sessions from
+// `crux-axi <file>` invocation re-spawns a fresh server and adopts resumable sessions from
 // state.json. Browser-ended sessions still require the explicit --reopen opt-in. Set
-// LAVISH_AXI_IDLE_TIMEOUT_MS to 0/off to disable, or to a custom millisecond budget.
+// CRUX_AXI_IDLE_TIMEOUT_MS to 0/off to disable, or to a custom millisecond budget.
 export function resolveIdleTimeoutMs(env = process.env) {
-  const raw = env.LAVISH_AXI_IDLE_TIMEOUT_MS?.trim();
+  const raw = env.CRUX_AXI_IDLE_TIMEOUT_MS?.trim();
   if (raw === undefined || raw === "") return DEFAULT_IDLE_TIMEOUT_MS;
   if (raw === "0" || raw.toLowerCase() === "off") return null;
   const value = Number(raw);
@@ -134,9 +134,9 @@ export async function serve({
   const deliveredFeedback = new Set();
   const sseClients = new Set();
   const whiteboardChannelSecret = crypto.randomBytes(32);
-  const verbose = debug || process.env.LAVISH_AXI_DEBUG === "1";
+  const verbose = debug || process.env.CRUX_AXI_DEBUG === "1";
   const writeLog = typeof log === "function" ? log : (line) => process.stderr.write(`${line}\n`);
-  const logEvent = verbose ? (line) => writeLog(`[lavish] ${line}`) : null;
+  const logEvent = verbose ? (line) => writeLog(`[crux] ${line}`) : null;
   let publicPort = port;
 
   // Whiteboard sidecar files live next to state.json, keyed by session + diagram.
@@ -150,11 +150,11 @@ export async function serve({
   // never one of the hostnames this server answers to.
   //
   // Loopback names are always accepted. Binding to a concrete interface
-  // (LAVISH_AXI_HOST) or naming a link host (LAVISH_AXI_LINK_HOST) adds that host,
+  // (CRUX_AXI_HOST) or naming a link host (CRUX_AXI_LINK_HOST) adds that host,
   // so an operator who intentionally exposes the server on a specific interface
   // keeps rebinding protection while their chosen hostname works. Additional
   // names (a reverse-proxy hostname, extra interfaces) are an explicit opt-in via
-  // LAVISH_AXI_ALLOWED_HOSTS; a lone "*" there disables the guard for operators
+  // CRUX_AXI_ALLOWED_HOSTS; a lone "*" there disables the guard for operators
   // who front the server with their own authentication. When a reverse proxy sits
   // in front, X-Forwarded-Host is validated too (see isAllowedRequestHost).
   const allowedHostnames = buildAllowedHostnames({ host, linkHost: linkHostName, allowedHosts });
@@ -179,7 +179,7 @@ export async function serve({
   );
 
   app.get("/health", (req, res) => {
-    res.json({ ok: true, app: "lavish-axi", version });
+    res.json({ ok: true, app: "crux-axi", version });
   });
 
   let shutdownResolve;
@@ -201,9 +201,9 @@ export async function serve({
       const existing = await store.findByKey(key);
       // A user-initiated end (ending or send-and-ending from the browser) means the human
       // deliberately closed the review surface. Silently reopening it on the next
-      // `lavish-axi <file>` is the exact behavior this route exists to prevent - require an
+      // `crux-axi <file>` is the exact behavior this route exists to prevent - require an
       // explicit `reopen` opt-in instead of reviving it automatically. Agent-initiated ends
-      // (`lavish-axi end`) keep reviving on the next open, same as before this change.
+      // (`crux-axi end`) keep reviving on the next open, same as before this change.
       if (existing?.status === "ended" && existing.ended_by === "user" && !reopen) {
         logEvent?.(`session open blocked (user-ended) key=${key} file=${file}`);
         res.json({ key, file, url: existing.url, status: "user-ended" });
@@ -381,8 +381,8 @@ export async function serve({
       });
       const { unresolved, notices } = splitExportWarnings(warnings);
       res.setHeader("content-disposition", exportContentDisposition(session.file));
-      res.setHeader("x-lavish-export-warning-count", String(unresolved.length));
-      res.setHeader("x-lavish-export-notice-count", String(notices.length));
+      res.setHeader("x-crux-export-warning-count", String(unresolved.length));
+      res.setHeader("x-crux-export-notice-count", String(notices.length));
       res.type("html").send(html);
     } catch (error) {
       next(error);
@@ -390,7 +390,7 @@ export async function serve({
   });
 
   // Hosted share: build the local-inlined artifact and publish it to ht-ml.app, a third-party
-  // hosting service not part of Lavish, returning the share URL. Publishing sends the artifact
+  // hosting service not part of Crux, returning the share URL. Publishing sends the artifact
   // to ht-ml.app's servers. Remote CDN/font references are left intact for the viewer's browser
   // to load.
   // Publishing creates a public third-party page unless a password is supplied, so this is gated
@@ -462,7 +462,7 @@ export async function serve({
         createChromeHtml(session, {
           layoutGateEnabled: shouldEnableLayoutGate(req.query || {}),
           faviconTag,
-          title: title ? `${title} · Lavish` : "Lavish Editor",
+          title: title ? `${title} · Crux` : "Crux Editor",
         }),
       );
     } catch (error) {
@@ -483,7 +483,7 @@ export async function serve({
         return;
       }
       const html = await readFile(session.file, "utf8");
-      res.type("html").send(injectLavishSdk(html, key));
+      res.type("html").send(injectCruxSdk(html, key));
     } catch (error) {
       next(error);
     }
@@ -888,7 +888,7 @@ function encodeRfc5987Value(value) {
 const WILDCARD_BIND_HOSTS = new Set(["0.0.0.0", "::"]);
 
 // The set of Host header hostnames this server answers to: loopback names plus
-// the resolved bind and link host and any explicit LAVISH_AXI_ALLOWED_HOSTS
+// the resolved bind and link host and any explicit CRUX_AXI_ALLOWED_HOSTS
 // extras, minus wildcard binds and the "*" sentinel. Lowercased for
 // case-insensitive comparison against the incoming Host.
 export function buildAllowedHostnames({ host, linkHost: linkHostName, allowedHosts = [] }) {
@@ -903,7 +903,7 @@ export function buildAllowedHostnames({ host, linkHost: linkHostName, allowedHos
   );
 }
 
-// A lone "*" in LAVISH_AXI_ALLOWED_HOSTS is an explicit opt-out of the Host
+// A lone "*" in CRUX_AXI_ALLOWED_HOSTS is an explicit opt-out of the Host
 // allowlist, for operators who front the server with their own auth/proxy.
 export function allowsAllHosts(allowedHosts = []) {
   return allowedHosts.some((value) => String(value).trim() === "*");
@@ -948,7 +948,7 @@ export function isAllowedHostHeader(hostHeader, allowedHostnames) {
 // header is required and must be allowlisted. When an X-Forwarded-Host is present
 // - a reverse proxy in front of the loopback server - its outermost (last) value
 // must ALSO be allowlisted, so a proxy works once its public hostname is added to
-// LAVISH_AXI_ALLOWED_HOSTS. This is an AND check: a client-spoofed forwarded host
+// CRUX_AXI_ALLOWED_HOSTS. This is an AND check: a client-spoofed forwarded host
 // can only narrow access (Host is still checked), never widen it into a bypass. A
 // blank forwarded host is treated as absent, matching how proxies omit it.
 /**
@@ -1022,8 +1022,8 @@ async function watchSession(session, watchers, events, logEvent) {
 // Watching the artifact's parent directory recursively can stall the event loop when the
 // artifact lives in a large tree (e.g. ~/Downloads). Default to watching only the artifact
 // itself; an artifact opts back into directory-wide live reload via either a
-// `data-lavish-live-reload-root` attribute on its root element or
-// `<meta name="lavish-live-reload" content="root">`.
+// `data-crux-live-reload-root` attribute on its root element or
+// `<meta name="crux-live-reload" content="root">`.
 export async function resolveWatchTarget(session) {
   const baseOptions = {
     ignoreInitial: true,
@@ -1037,7 +1037,7 @@ export async function resolveWatchTarget(session) {
         scope: "directory",
         options: {
           ...baseOptions,
-          ignored: /(^|[/\\])(\.git|node_modules|dist|build|\.lavish-axi)([/\\]|$)/,
+          ignored: /(^|[/\\])(\.git|node_modules|dist|build|\.crux-axi)([/\\]|$)/,
         },
       };
     }
@@ -1050,8 +1050,8 @@ export async function resolveWatchTarget(session) {
 export function hasLiveReloadRootOptIn(html) {
   if (typeof html !== "string") return false;
   const searchableHtml = html.replace(/<!--[\s\S]*?-->/g, "");
-  if (/<html\b[^>]*\sdata-lavish-live-reload-root(?:[\s=>/]|$)[^>]*>/i.test(searchableHtml)) return true;
-  return /<meta\b(?=[^>]*name=["']lavish-live-reload["'])(?=[^>]*content=["']root["'])[^>]*>/i.test(searchableHtml);
+  if (/<html\b[^>]*\sdata-crux-live-reload-root(?:[\s=>/]|$)[^>]*>/i.test(searchableHtml)) return true;
+  return /<meta\b(?=[^>]*name=["']crux-live-reload["'])(?=[^>]*content=["']root["'])[^>]*>/i.test(searchableHtml);
 }
 
 function setPollActive(key, activePolls, deliveredFeedback, events, active) {
@@ -1184,7 +1184,7 @@ function normalizeFlagValue(value) {
   return value === undefined || value === null ? "" : String(value).trim().toLowerCase();
 }
 
-const LAVISH_DEFAULT_FAVICON =
+const CRUX_DEFAULT_FAVICON =
   "<link rel=\"icon\" href=\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>\u{1F48E}</text></svg>\">";
 
 function readTagAttr(tag, name) {
@@ -1205,16 +1205,16 @@ function readTagAttr(tag, name) {
   return "";
 }
 
-// Pull a tab favicon + title out of the artifact's own <head>. Lavish renders the
+// Pull a tab favicon + title out of the artifact's own <head>. Crux renders the
 // artifact in a sandboxed iframe, so the artifact's own <link rel="icon"> and
-// <title> never reach the browser tab; surfacing them here makes a wall of Lavish
-// tabs identifiable. Falls back to the Lavish default favicon. Only data: and
+// <title> never reach the browser tab; surfacing them here makes a wall of Crux
+// tabs identifiable. Falls back to the Crux default favicon. Only data: and
 // absolute (http/https/protocol-relative) icon hrefs are adopted verbatim;
 // artifact-relative hrefs would not resolve against the chrome page, so they fall
 // back to the default.
 export function extractArtifactHead(html) {
   const head = String(html || "").slice(0, 10000);
-  let faviconTag = LAVISH_DEFAULT_FAVICON;
+  let faviconTag = CRUX_DEFAULT_FAVICON;
   const linkTags = head.match(/<link\b(?:"[^"]*"|'[^']*'|[^"'>])*>/gi) || [];
   const iconTag = linkTags.find((tag) => /(^|\s)icon(\s|$)/i.test(readTagAttr(tag, "rel")));
   const iconHref = iconTag ? readTagAttr(iconTag, "href") : "";
@@ -1230,7 +1230,7 @@ export function extractArtifactHead(html) {
 
 export function createChromeHtml(
   session,
-  { layoutGateEnabled = true, faviconTag = LAVISH_DEFAULT_FAVICON, title = "Lavish Editor" } = {},
+  { layoutGateEnabled = true, faviconTag = CRUX_DEFAULT_FAVICON, title = "Crux Editor" } = {},
 ) {
   const sessionJson = jsonScript({
     key: session.key,
@@ -1240,7 +1240,7 @@ export function createChromeHtml(
     modeToggleHotkeyKey: MODE_TOGGLE_HOTKEY_KEY,
   });
   const { head: pathHead, tail: pathTail } = displayPathParts(session.file);
-  const bodyClass = layoutGateEnabled ? "lavish layout-gate-active" : "lavish";
+  const bodyClass = layoutGateEnabled ? "crux layout-gate-active" : "crux";
   const layoutGateHidden = layoutGateEnabled ? "" : " hidden";
   const modeHotkeyUpper = MODE_TOGGLE_HOTKEY_KEY.toUpperCase();
   const modeToggleHint = `Toggle annotate/explore mode (⌘${modeHotkeyUpper} / Ctrl+${modeHotkeyUpper})`;
@@ -1254,13 +1254,13 @@ ${faviconTag}
 <link rel="stylesheet" href="/chrome.css">
 </head>
 <body class="${bodyClass}">
-<div class="bar"><div class="brand"><span class="brand-mark">Lavish</span><span class="brand-support">Editor</span></div><div class="spacer" aria-hidden="true"></div><button class="annotate-switch" id="annotation" type="button" aria-pressed="true" title="${escapeHtml(modeToggleHint)}"><span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span><span>Annotate</span></button><div class="more-wrap" id="moreWrap"><button class="more-button" id="moreButton" type="button" title="More" aria-haspopup="menu" aria-expanded="false">${chromeIcons.more}</button><div class="menu more-menu" id="moreMenu" hidden><div class="menu-head"><div class="menu-label">Editing</div><button class="menu-file" id="copyPath" type="button" title="Copy path · ${escapeHtml(session.file)}">${chromeIcons.file}<span class="menu-file-text"><span class="path-head">${escapeHtml(pathHead)}</span><span class="path-tail">${escapeHtml(pathTail)}</span></span><span class="copy-hint" id="copyHint"><span class="icon-copy">${chromeIcons.copy}</span><span class="icon-check">${chromeIcons.check}</span><span id="copyHintText">Copy</span></span></button></div><div class="menu-rule"></div><button class="menu-item" id="reloadArtifact" type="button">${chromeIcons.refresh}<span>Reload artifact</span></button><button class="menu-item" id="copySnapshot" type="button">${chromeIcons.camera}<span>Copy DOM snapshot</span></button><button class="menu-item" id="exportArtifact" type="button">${chromeIcons.download}<span>Export standalone HTML</span></button><button class="menu-item" id="shareArtifact" type="button">${chromeIcons.globe}<span>Publish link</span></button><div class="menu-rule"></div><button class="menu-item danger" id="end" type="button">${chromeIcons.exit}<span>End session</span></button></div></div></div>
-<div class="layout"><div class="frame"><iframe id="artifact" sandbox="allow-scripts allow-forms allow-popups allow-downloads" data-artifact-src="/artifact/${session.key}/index.html"></iframe><div class="layout-issue-banner" id="layoutIssueBanner" hidden>This surface has a severe layout failure. Your agent has been notified.</div></div><aside class="panel"><h2>Conversation</h2><div class="panel-scroll" id="panelScroll"><div class="chat" id="chatLog"></div><div class="annotation-pills" id="annotationPills"></div></div><div class="composer"><div class="presence-banner" id="presenceBanner" hidden>Your agent is not listening. If this persists, ask your agent to poll for updates from Lavish.</div><textarea id="chatInput" placeholder="Write a message for the agent..."></textarea><div class="send-hint" id="sendHint" hidden>Write a message or annotate an element first.</div><div class="actions" id="sendActions"><button class="button button-danger" id="sendAndEnd" type="button">${chromeIcons.exit}<span>Send &amp; End</span></button><button class="button" id="send">Send to Agent</button></div></div></aside></div>
-<div class="share-overlay" id="shareDialog" role="dialog" aria-modal="true" aria-labelledby="shareTitleText" hidden><form class="share-card" id="shareForm"><div class="share-head"><div><div class="share-kicker">Publish to <a class="share-link" href="https://ht-ml.app" target="_blank" rel="noopener noreferrer">ht-ml.app</a></div><h2 id="shareTitleText">Publish artifact</h2></div><button class="share-close" id="shareClose" type="button" aria-label="Close publish dialog"><svg width="14" height="14" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div><p class="share-note">ht-ml.app is a separate, third-party hosting service, not part of Lavish. Publishing sends this artifact to its servers.</p><p class="share-copy">This uploads this artifact to ht-ml.app with local assets inlined. Without a password, the page is PUBLIC and anyone with the link can open it. With a password, the page is PRIVATE and viewers must supply the password to view.</p><p class="share-note">Do not publish secrets. The Lavish annotation SDK is not included.</p><div class="share-grid"><label>Password (optional)<input id="sharePassword" name="password" type="password" autocomplete="new-password" placeholder="Leave blank for a public page"></label></div><div class="share-status" id="shareStatus" role="status"></div><div class="share-result" id="shareResult" hidden><label>Share URL<div class="share-copy-row"><input id="shareUrl" readonly><button class="share-copy-btn" id="copyShareUrl" type="button">Copy URL</button></div></label><label>Update key (secret)<div class="share-copy-row"><input id="shareUpdateKey" readonly><button class="share-copy-btn" id="copyUpdateKey" type="button">Copy key</button></div></label><p class="share-note">Keep the update key private. ht-ml.app returns it once and it is the only way to update or delete this page later.</p></div><div class="share-actions"><button class="share-cancel" id="shareCancel" type="button">Cancel</button><button class="button" id="sharePublish" type="submit">Publish</button></div></form></div>
-<div class="ended-overlay layout-gate-overlay" id="layoutGateOverlay"${layoutGateHidden}><div class="ended-card"><div class="ended-title" id="layoutGateTitle">Checking layout.<br>One moment.</div><p class="ended-copy" id="layoutGateCopy">Lavish is waiting for fonts and final geometry before revealing this artifact.</p><button class="button ended-action" id="layoutGateAction" type="button">Show anyway</button></div></div>
+<div class="bar"><div class="brand"><span class="brand-mark">Crux</span><span class="brand-support">Editor</span></div><div class="spacer" aria-hidden="true"></div><button class="annotate-switch" id="annotation" type="button" aria-pressed="true" title="${escapeHtml(modeToggleHint)}"><span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span><span>Annotate</span></button><div class="more-wrap" id="moreWrap"><button class="more-button" id="moreButton" type="button" title="More" aria-haspopup="menu" aria-expanded="false">${chromeIcons.more}</button><div class="menu more-menu" id="moreMenu" hidden><div class="menu-head"><div class="menu-label">Editing</div><button class="menu-file" id="copyPath" type="button" title="Copy path · ${escapeHtml(session.file)}">${chromeIcons.file}<span class="menu-file-text"><span class="path-head">${escapeHtml(pathHead)}</span><span class="path-tail">${escapeHtml(pathTail)}</span></span><span class="copy-hint" id="copyHint"><span class="icon-copy">${chromeIcons.copy}</span><span class="icon-check">${chromeIcons.check}</span><span id="copyHintText">Copy</span></span></button></div><div class="menu-rule"></div><button class="menu-item" id="reloadArtifact" type="button">${chromeIcons.refresh}<span>Reload artifact</span></button><button class="menu-item" id="copySnapshot" type="button">${chromeIcons.camera}<span>Copy DOM snapshot</span></button><button class="menu-item" id="exportArtifact" type="button">${chromeIcons.download}<span>Export standalone HTML</span></button><button class="menu-item" id="shareArtifact" type="button">${chromeIcons.globe}<span>Publish link</span></button><div class="menu-rule"></div><button class="menu-item danger" id="end" type="button">${chromeIcons.exit}<span>End session</span></button></div></div></div>
+<div class="layout"><div class="frame"><iframe id="artifact" sandbox="allow-scripts allow-forms allow-popups allow-downloads" data-artifact-src="/artifact/${session.key}/index.html"></iframe><div class="layout-issue-banner" id="layoutIssueBanner" hidden>This surface has a severe layout failure. Your agent has been notified.</div></div><aside class="panel"><h2>Conversation</h2><div class="panel-scroll" id="panelScroll"><div class="chat" id="chatLog"></div><div class="annotation-pills" id="annotationPills"></div></div><div class="composer"><div class="presence-banner" id="presenceBanner" hidden>Your agent is not listening. If this persists, ask your agent to poll for updates from Crux.</div><textarea id="chatInput" placeholder="Write a message for the agent..."></textarea><div class="send-hint" id="sendHint" hidden>Write a message or annotate an element first.</div><div class="actions" id="sendActions"><button class="button button-danger" id="sendAndEnd" type="button">${chromeIcons.exit}<span>Send &amp; End</span></button><button class="button" id="send">Send to Agent</button></div></div></aside></div>
+<div class="share-overlay" id="shareDialog" role="dialog" aria-modal="true" aria-labelledby="shareTitleText" hidden><form class="share-card" id="shareForm"><div class="share-head"><div><div class="share-kicker">Publish to <a class="share-link" href="https://ht-ml.app" target="_blank" rel="noopener noreferrer">ht-ml.app</a></div><h2 id="shareTitleText">Publish artifact</h2></div><button class="share-close" id="shareClose" type="button" aria-label="Close publish dialog"><svg width="14" height="14" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div><p class="share-note">ht-ml.app is a separate, third-party hosting service, not part of Crux. Publishing sends this artifact to its servers.</p><p class="share-copy">This uploads this artifact to ht-ml.app with local assets inlined. Without a password, the page is PUBLIC and anyone with the link can open it. With a password, the page is PRIVATE and viewers must supply the password to view.</p><p class="share-note">Do not publish secrets. The Crux annotation SDK is not included.</p><div class="share-grid"><label>Password (optional)<input id="sharePassword" name="password" type="password" autocomplete="new-password" placeholder="Leave blank for a public page"></label></div><div class="share-status" id="shareStatus" role="status"></div><div class="share-result" id="shareResult" hidden><label>Share URL<div class="share-copy-row"><input id="shareUrl" readonly><button class="share-copy-btn" id="copyShareUrl" type="button">Copy URL</button></div></label><label>Update key (secret)<div class="share-copy-row"><input id="shareUpdateKey" readonly><button class="share-copy-btn" id="copyUpdateKey" type="button">Copy key</button></div></label><p class="share-note">Keep the update key private. ht-ml.app returns it once and it is the only way to update or delete this page later.</p></div><div class="share-actions"><button class="share-cancel" id="shareCancel" type="button">Cancel</button><button class="button" id="sharePublish" type="submit">Publish</button></div></form></div>
+<div class="ended-overlay layout-gate-overlay" id="layoutGateOverlay"${layoutGateHidden}><div class="ended-card"><div class="ended-title" id="layoutGateTitle">Checking layout.<br>One moment.</div><p class="ended-copy" id="layoutGateCopy">Crux is waiting for fonts and final geometry before revealing this artifact.</p><button class="button ended-action" id="layoutGateAction" type="button">Show anyway</button></div></div>
 <div class="ended-overlay" id="endedOverlay" hidden><div class="ended-card"><div class="ended-title">Session ended.<br>Return to your agent to continue.</div><p class="ended-copy">${escapeHtml(session.file)}</p></div></div>
 <div class="whiteboard-overlay" id="whiteboardOverlay" hidden><div class="whiteboard-shell"><div class="whiteboard-error" id="whiteboardError" hidden></div><button class="whiteboard-close" id="whiteboardClose" type="button" aria-label="Close whiteboard"><svg width="14" height="14" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><iframe id="whiteboardFrame" title="Excalidraw whiteboard" sandbox="allow-scripts allow-popups"></iframe></div></div>
-<script id="lavish-session" type="application/json">${sessionJson}</script>
+<script id="crux-session" type="application/json">${sessionJson}</script>
 <script src="/chrome-client.js"></script>
 </body>
 </html>`;
@@ -1272,11 +1272,11 @@ export function createWhiteboardFrameHtml(channelToken = "") {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lavish Whiteboard</title>
+<title>Crux Whiteboard</title>
 <link rel="stylesheet" href="/whiteboard-assets/whiteboard.css">
 </head>
 <body>
-<script>window.__lavishWhiteboardChannelToken=${JSON.stringify(channelToken)};</script>
+<script>window.__cruxWhiteboardChannelToken=${JSON.stringify(channelToken)};</script>
 <script src="/whiteboard-assets/whiteboard.js"></script>
 </body>
 </html>`;
@@ -1293,7 +1293,7 @@ export function createSdkJs(key) {
   return `(() => {
 const key=${JSON.stringify(key)};
 void key;
-const deriveQueueKey=${deriveLavishQueueKey.toString()};
+const deriveQueueKey=${deriveCruxQueueKey.toString()};
 const isNativeInteractiveControl=${isNativeInteractiveControl.toString()};
 const MODE_TOGGLE_HOTKEY_KEY=${JSON.stringify(MODE_TOGGLE_HOTKEY_KEY)};
 const isModeToggleHotkeyEvent=${isModeToggleHotkeyEvent.toString()};

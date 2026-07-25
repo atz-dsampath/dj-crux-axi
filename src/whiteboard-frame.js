@@ -76,7 +76,7 @@ function post(message) {
       ...(state.channelId
         ? { channelId: state.channelId }
         : {
-            channelToken: String(/** @type {any} */ (window).__lavishWhiteboardChannelToken || ""),
+            channelToken: String(/** @type {any} */ (window).__cruxWhiteboardChannelToken || ""),
             diagramId: state.diagramId,
           }),
     },
@@ -99,8 +99,8 @@ function setBanner(id, text) {
 }
 
 function buildShell(theme, mode) {
-  document.body.dataset.lavishWhiteboardTheme = theme;
-  document.body.dataset.lavishWhiteboardMode = mode;
+  document.body.dataset.cruxWhiteboardTheme = theme;
+  document.body.dataset.cruxWhiteboardMode = mode;
   const shell = el("div", { id: "wbShell" });
   const header = el("header", { id: "wbHeader" });
   const title = el("div", { id: "wbTitle", textContent: "Whiteboard" });
@@ -123,7 +123,7 @@ function buildShell(theme, mode) {
       textContent: "Fullscreen",
       title: "Open this whiteboard full screen",
     });
-    fullscreenButton.onclick = () => post({ type: "lavish-whiteboard:maximize", diagramIndex: state.diagramIndex });
+    fullscreenButton.onclick = () => post({ type: "crux-whiteboard:maximize", diagramIndex: state.diagramIndex });
     header.append(fullscreenButton);
   }
   const fallbackBanner = el("div", { id: "wbFallbackBanner", className: "wb-banner", hidden: true });
@@ -223,7 +223,7 @@ function postSave(flushId = "") {
   const scene = currentScene();
   if (!scene) return false;
   post({
-    type: "lavish-whiteboard:save",
+    type: "crux-whiteboard:save",
     diagramIndex: state.diagramIndex,
     ...createWhiteboardPersistencePayload(state, scene),
     ...(flushId ? { flushId } : {}),
@@ -247,7 +247,7 @@ function prepareTeardown(message) {
   state.setLocked?.(true);
   if (!postSave(flushId)) {
     state.teardownFlushId = "";
-    post({ type: "lavish-whiteboard:teardownReady", flushId });
+    post({ type: "crux-whiteboard:teardownReady", flushId });
   }
 }
 
@@ -258,7 +258,7 @@ function flushSaveNow(message) {
   window.clearTimeout(state.saveTimer);
   if (!postSave(flushId)) {
     state.flushIds.delete(flushId);
-    post({ type: "lavish-whiteboard:flushComplete", flushId, ok: true });
+    post({ type: "crux-whiteboard:flushComplete", flushId, ok: true });
   }
 }
 
@@ -268,17 +268,17 @@ function handleSaveResult(message) {
   if (flushId === state.teardownFlushId) {
     state.teardownFlushId = "";
     if (message.ok) {
-      post({ type: "lavish-whiteboard:teardownReady", flushId });
+      post({ type: "crux-whiteboard:teardownReady", flushId });
       return;
     }
     state.setLocked?.(false);
     const error = String(message.error || "failed to save whiteboard scene");
     showStatus(`Could not save before closing: ${error}`, { transient: false });
-    post({ type: "lavish-whiteboard:teardownFailed", flushId, error });
+    post({ type: "crux-whiteboard:teardownFailed", flushId, error });
     return;
   }
   if (state.flushIds.delete(flushId)) {
-    post({ type: "lavish-whiteboard:flushComplete", flushId, ok: Boolean(message.ok) });
+    post({ type: "crux-whiteboard:flushComplete", flushId, ok: Boolean(message.ok) });
   }
 }
 
@@ -564,7 +564,7 @@ async function queueFeedback() {
     });
     const pngDataUrl = await blobToDataUrl(blob);
     post({
-      type: "lavish-whiteboard:queueFeedback",
+      type: "crux-whiteboard:queueFeedback",
       diagramIndex: state.diagramIndex,
       diagramId: state.diagramId,
       ...createWhiteboardPersistencePayload(state, scene),
@@ -651,18 +651,18 @@ function main() {
   window.addEventListener("message", (event) => {
     if (event.source !== window.top) return;
     const msg = event.data || {};
-    if (msg.type === "lavish-whiteboard:init" && !initialized && typeof msg.channelId === "string" && msg.channelId) {
+    if (msg.type === "crux-whiteboard:init" && !initialized && typeof msg.channelId === "string" && msg.channelId) {
       initialized = true;
       state.channelId = msg.channelId;
       buildShell(msg.theme === "dark" ? "dark" : "light", msg.mode === "inline" ? "inline" : "overlay");
       handleInit(msg);
     }
     if (!initialized || msg.channelId !== state.channelId) return;
-    if (msg.type === "lavish-whiteboard:sourceChanged") handleSourceChanged(msg);
-    if (msg.type === "lavish-whiteboard:prepareTeardown") prepareTeardown(msg);
-    if (msg.type === "lavish-whiteboard:flush") flushSaveNow(msg);
-    if (msg.type === "lavish-whiteboard:saveResult") handleSaveResult(msg);
-    if (msg.type === "lavish-whiteboard:queueResult") {
+    if (msg.type === "crux-whiteboard:sourceChanged") handleSourceChanged(msg);
+    if (msg.type === "crux-whiteboard:prepareTeardown") prepareTeardown(msg);
+    if (msg.type === "crux-whiteboard:flush") flushSaveNow(msg);
+    if (msg.type === "crux-whiteboard:saveResult") handleSaveResult(msg);
+    if (msg.type === "crux-whiteboard:queueResult") {
       resetQueueButton();
       if (msg.ok) {
         const note = /** @type {HTMLInputElement | null} */ (document.getElementById("wbNote"));
@@ -673,7 +673,7 @@ function main() {
       }
     }
   });
-  post({ type: "lavish-whiteboard:ready" });
+  post({ type: "crux-whiteboard:ready" });
 }
 
 main();

@@ -127,7 +127,7 @@ async function createChromeHarness({
     return el;
   }
 
-  element("lavish-session").textContent = JSON.stringify(sessionData);
+  element("crux-session").textContent = JSON.stringify(sessionData);
   const frame = element("artifact");
   frame.dataset.artifactSrc = artifactSrc;
   Object.defineProperty(frame, "src", {
@@ -164,7 +164,7 @@ async function createChromeHarness({
     setTimeout: fakeSetTimeout,
     URL: {
       createObjectURL() {
-        return "blob:lavish-test";
+        return "blob:crux-test";
       },
       revokeObjectURL() {},
     },
@@ -272,7 +272,7 @@ async function createChromeHarness({
       return event;
     },
     queued() {
-      return JSON.parse(storage.get("lavish-axi:queued:abc") || "[]");
+      return JSON.parse(storage.get("crux-axi:queued:abc") || "[]");
     },
     reloadCount() {
       return reloadCount;
@@ -290,15 +290,15 @@ test("chrome client replaces queued prompts with the same internal key", async (
   const chrome = await createChromeHarness();
 
   chrome.sendFrameMessage({
-    type: "lavish:queuePrompt",
-    prompt: { prompt: "Use plan A", selector: "input#plan-a", tag: "choice", text: "Plan A", _lavishQueueKey: "plan" },
+    type: "crux:queuePrompt",
+    prompt: { prompt: "Use plan A", selector: "input#plan-a", tag: "choice", text: "Plan A", _cruxQueueKey: "plan" },
   });
   chrome.sendFrameMessage({
-    type: "lavish:queuePrompt",
-    prompt: { prompt: "Use plan B", selector: "input#plan-b", tag: "choice", text: "Plan B", _lavishQueueKey: "plan" },
+    type: "crux:queuePrompt",
+    prompt: { prompt: "Use plan B", selector: "input#plan-b", tag: "choice", text: "Plan B", _cruxQueueKey: "plan" },
   });
   chrome.sendFrameMessage({
-    type: "lavish:queuePrompt",
+    type: "crux:queuePrompt",
     prompt: { prompt: "Apply dark mode", selector: "button#dark", tag: "choice", text: "Dark" },
   });
 
@@ -316,7 +316,7 @@ test("chrome client scrolls new chat bubbles into view above queued prompts", as
   panelScroll.scrollHeight = 1800;
 
   chrome.sendFrameMessage({
-    type: "lavish:queuePrompt",
+    type: "crux:queuePrompt",
     prompt: { prompt: "Review the title", selector: "h1", tag: "annotation", text: "Title" },
   });
   assert.equal(panelScroll.scrollTop, 1800);
@@ -342,7 +342,7 @@ test("chrome client posts layout warnings from the artifact iframe", async () =>
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [
       {
         selector: "html",
@@ -376,7 +376,7 @@ test("chrome client surfaces export warnings from the server response", async ()
       ok: true,
       headers: {
         get(name) {
-          if (name.toLowerCase() === "x-lavish-export-warning-count") return "1";
+          if (name.toLowerCase() === "x-crux-export-warning-count") return "1";
           return null;
         },
       },
@@ -396,8 +396,8 @@ test("chrome client surfaces export notices from the server response", async () 
       ok: true,
       headers: {
         get(name) {
-          if (name.toLowerCase() === "x-lavish-export-warning-count") return "0";
-          if (name.toLowerCase() === "x-lavish-export-notice-count") return "1";
+          if (name.toLowerCase() === "x-crux-export-warning-count") return "0";
+          if (name.toLowerCase() === "x-crux-export-notice-count") return "1";
           return null;
         },
       },
@@ -417,8 +417,8 @@ test("chrome client includes export notices alongside unresolved assets", async 
       ok: true,
       headers: {
         get(name) {
-          if (name.toLowerCase() === "x-lavish-export-warning-count") return "2";
-          if (name.toLowerCase() === "x-lavish-export-notice-count") return "1";
+          if (name.toLowerCase() === "x-crux-export-warning-count") return "2";
+          if (name.toLowerCase() === "x-crux-export-notice-count") return "1";
           return null;
         },
       },
@@ -578,7 +578,7 @@ test("layout gate reveals after a clean audit result", async () => {
   assert.equal(chrome.element("layoutGateOverlay").hidden, false);
   assert.equal(chrome.element("body").classList.contains("layout-gate-active"), true);
 
-  chrome.sendFrameMessage({ type: "lavish:layoutWarnings", layout_warnings: [] });
+  chrome.sendFrameMessage({ type: "crux:layoutWarnings", layout_warnings: [] });
   await flushPromises();
 
   assert.equal(chrome.element("layoutGateOverlay").hidden, true);
@@ -597,7 +597,7 @@ test("layout gate holds on error severity audit findings and still posts them", 
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [
       {
         selector: "html",
@@ -626,7 +626,7 @@ test("warning-only layout observations are discarded before gate and feedback su
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [
       {
         selector: ".card",
@@ -669,7 +669,7 @@ test("a proven severe result is not mistaken for an uncertain audit timeout", as
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [{ selector: "html", kind: "content-overlap", severity: "error" }],
   });
   chrome.runTimers(25);
@@ -685,7 +685,7 @@ test("a late clean audit stays clean after the layout gate times out", async () 
   });
 
   chrome.runTimers(25);
-  chrome.sendFrameMessage({ type: "lavish:layoutWarnings", layout_warnings: [] });
+  chrome.sendFrameMessage({ type: "crux:layoutWarnings", layout_warnings: [] });
   await flushPromises();
 
   assert.equal(chrome.element("layoutGateOverlay").hidden, true);
@@ -708,7 +708,7 @@ test("layout gate timeout re-arms on reload", async () => {
   assert.equal(chrome.element("layoutIssueBanner").hidden, true);
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [{ selector: "html", kind: "content-overlap", severity: "error" }],
   });
 
@@ -720,7 +720,7 @@ test("layout gate manual override reveals immediately", async () => {
   const chrome = await createChromeHarness();
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [{ selector: "html", kind: "content-overlap", severity: "error" }],
   });
   chrome.element("layoutGateAction").onclick();
@@ -734,7 +734,7 @@ test("layout gate manual override stays bypassed on reload", async () => {
   const chrome = await createChromeHarness();
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [{ selector: "html", kind: "content-overlap", severity: "error" }],
   });
   chrome.element("layoutGateAction").onclick();
@@ -744,7 +744,7 @@ test("layout gate manual override stays bypassed on reload", async () => {
   assert.equal(chrome.element("body").classList.contains("layout-gate-active"), false);
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [{ selector: "html", kind: "content-overlap", severity: "error" }],
   });
 
@@ -761,7 +761,7 @@ test("layout gate stays skipped when the session disables it", async () => {
   assert.equal(chrome.element("body").classList.contains("layout-gate-active"), false);
 
   chrome.sendFrameMessage({
-    type: "lavish:layoutWarnings",
+    type: "crux:layoutWarnings",
     layout_warnings: [{ selector: "html", kind: "content-overlap", severity: "error" }],
   });
   await flushPromises();
@@ -780,13 +780,13 @@ test("chrome client strips the internal queue key before posting prompts", async
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:queuePrompt",
-    prompt: { prompt: "Use plan B", selector: "input#plan-b", tag: "choice", text: "Plan B", _lavishQueueKey: "plan" },
+    type: "crux:queuePrompt",
+    prompt: { prompt: "Use plan B", selector: "input#plan-b", tag: "choice", text: "Plan B", _cruxQueueKey: "plan" },
   });
   chrome.element("send").onclick();
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:requestSnapshot");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:requestSnapshot");
 
-  chrome.sendFrameMessage({ type: "lavish:snapshot", snapshot: "uid=1 body" });
+  chrome.sendFrameMessage({ type: "crux:snapshot", snapshot: "uid=1 body" });
   await flushPromises();
 
   assert.equal(posts.length, 1);
@@ -808,13 +808,13 @@ test("chrome send and end carries the end intent with queued prompts", async () 
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:queuePrompt",
+    type: "crux:queuePrompt",
     prompt: { prompt: "Ship this", selector: "button#ship", tag: "choice", text: "Ship" },
   });
   chrome.element("sendAndEnd").onclick();
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:requestSnapshot");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:requestSnapshot");
 
-  chrome.sendFrameMessage({ type: "lavish:snapshot", snapshot: "uid=1 body" });
+  chrome.sendFrameMessage({ type: "crux:snapshot", snapshot: "uid=1 body" });
   await flushPromises();
   await flushPromises();
 
@@ -866,16 +866,16 @@ test("chrome send and end during an in-flight submit still ends after the submit
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:queuePrompt",
+    type: "crux:queuePrompt",
     prompt: { prompt: "Ship this", selector: "button#ship", tag: "choice", text: "Ship" },
   });
   chrome.element("send").onclick();
-  chrome.sendFrameMessage({ type: "lavish:snapshot", snapshot: "uid=1 body" });
+  chrome.sendFrameMessage({ type: "crux:snapshot", snapshot: "uid=1 body" });
   await flushPromises();
   assert.equal(posts.length, 1);
 
   chrome.element("sendAndEnd").onclick();
-  chrome.sendFrameMessage({ type: "lavish:snapshot", snapshot: "uid=1 body" });
+  chrome.sendFrameMessage({ type: "crux:snapshot", snapshot: "uid=1 body" });
   await flushPromises();
   assert.equal(posts.length, 1);
 
@@ -902,13 +902,13 @@ test("Cmd/Ctrl+I toggles annotation mode from the chrome document, regardless of
   const metaEvent = chrome.dispatchDocumentKeydown({ key: "i", metaKey: true });
   assert.equal(metaEvent.defaultPrevented, true);
   assert.equal(chrome.element("annotation")["aria-pressed"], "false");
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:setAnnotationMode");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:setAnnotationMode");
   assert.equal(chrome.postedToFrame.at(-1).enabled, false);
 
   const ctrlEvent = chrome.dispatchDocumentKeydown({ key: "I", ctrlKey: true });
   assert.equal(ctrlEvent.defaultPrevented, true);
   assert.equal(chrome.element("annotation")["aria-pressed"], "true");
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:setAnnotationMode");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:setAnnotationMode");
   assert.equal(chrome.postedToFrame.at(-1).enabled, true);
 });
 
@@ -948,22 +948,22 @@ test("chrome client reads the mode toggle hotkey from the session bootstrap", as
   const bootstrapHotkeyEvent = chrome.dispatchDocumentKeydown({ key: "K", metaKey: true });
   assert.equal(bootstrapHotkeyEvent.defaultPrevented, true);
   assert.equal(chrome.element("annotation")["aria-pressed"], "false");
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:setAnnotationMode");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:setAnnotationMode");
   assert.equal(chrome.postedToFrame.at(-1).enabled, false);
 });
 
 test("chrome client toggles annotation mode when the artifact SDK requests it via postMessage", async () => {
   const chrome = await createChromeHarness();
 
-  chrome.sendFrameMessage({ type: "lavish:toggleAnnotationMode" });
+  chrome.sendFrameMessage({ type: "crux:toggleAnnotationMode" });
 
   assert.equal(chrome.element("annotation")["aria-pressed"], "false");
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:setAnnotationMode");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:setAnnotationMode");
   assert.equal(chrome.postedToFrame.at(-1).enabled, false);
 
-  chrome.sendFrameMessage({ type: "lavish:toggleAnnotationMode" });
+  chrome.sendFrameMessage({ type: "crux:toggleAnnotationMode" });
   assert.equal(chrome.element("annotation")["aria-pressed"], "true");
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:setAnnotationMode");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:setAnnotationMode");
   assert.equal(chrome.postedToFrame.at(-1).enabled, true);
 });
 
@@ -973,12 +973,12 @@ test("chrome client ignores annotation mode toggles after the session ends", asy
   chrome.dispatchDocumentKeydown({ key: "i", metaKey: true });
   assert.equal(chrome.element("annotation")["aria-pressed"], "false");
 
-  chrome.sendFrameMessage({ type: "lavish:endSession" });
+  chrome.sendFrameMessage({ type: "crux:endSession" });
   await flushPromises();
   const afterEndPostCount = chrome.postedToFrame.length;
 
   chrome.dispatchDocumentKeydown({ key: "i", metaKey: true });
-  chrome.sendFrameMessage({ type: "lavish:toggleAnnotationMode" });
+  chrome.sendFrameMessage({ type: "crux:toggleAnnotationMode" });
 
   assert.equal(chrome.element("annotation")["aria-pressed"], "false");
   assert.equal(chrome.postedToFrame.length, afterEndPostCount);
@@ -995,7 +995,7 @@ function whiteboardFetch(url) {
 async function initializeInlineWhiteboard(chrome, token = "inline-channel") {
   const whiteboard = chrome.createInlineWhiteboard();
   chrome.sendInlineWhiteboardMessage(whiteboard, {
-    type: "lavish-whiteboard:ready",
+    type: "crux-whiteboard:ready",
     diagramIndex: 0,
     diagramId: "mermaid-1",
     channelToken: token,
@@ -1015,9 +1015,9 @@ test("artifact relays cannot invoke whiteboard persistence", async () => {
   });
 
   chrome.sendFrameMessage({
-    type: "lavish:whiteboardRelay",
+    type: "crux:whiteboardRelay",
     diagramIndex: 0,
-    message: { type: "lavish-whiteboard:save", scene: { elements: [{ id: "forged" }] } },
+    message: { type: "crux-whiteboard:save", scene: { elements: [{ id: "forged" }] } },
   });
   await flushPromises();
 
@@ -1036,13 +1036,13 @@ test("unverified whiteboard frames cannot invoke whiteboard persistence", async 
   const whiteboard = chrome.createInlineWhiteboard();
 
   chrome.sendInlineWhiteboardMessage(whiteboard, {
-    type: "lavish-whiteboard:ready",
+    type: "crux-whiteboard:ready",
     diagramIndex: 0,
     channelToken: "forged",
   });
   await flushPromises();
   chrome.sendInlineWhiteboardMessage(whiteboard, {
-    type: "lavish-whiteboard:save",
+    type: "crux-whiteboard:save",
     diagramIndex: 0,
     channelId: "forged",
     scene: { elements: [{ id: "forged" }] },
@@ -1060,30 +1060,30 @@ test("whiteboard fullscreen waits for the authenticated inline frame to flush", 
   const chrome = await createChromeHarness({ fetchImpl: async (url) => whiteboardFetch(url) });
   const inline = await initializeInlineWhiteboard(chrome);
   const init = inline.posted.at(-1);
-  assert.equal(init.type, "lavish-whiteboard:init");
+  assert.equal(init.type, "crux-whiteboard:init");
   assert.equal(init.channelId, "inline-channel");
 
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:maximize",
+    type: "crux-whiteboard:maximize",
     diagramIndex: 0,
     channelId: "inline-channel",
   });
 
   const prepare = inline.posted.at(-1);
-  assert.equal(prepare.type, "lavish-whiteboard:prepareTeardown");
+  assert.equal(prepare.type, "crux-whiteboard:prepareTeardown");
   assert.equal(
-    chrome.postedToFrame.some((message) => message.type === "lavish:suspendWhiteboard"),
+    chrome.postedToFrame.some((message) => message.type === "crux:suspendWhiteboard"),
     false,
   );
 
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "inline-channel",
     flushId: prepare.flushId,
   });
 
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:suspendWhiteboard");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:suspendWhiteboard");
   assert.match(chrome.element("whiteboardFrame").src, /^\/whiteboard-frame\?diagramIndex=0$/);
 });
 
@@ -1092,36 +1092,36 @@ test("whiteboard close waits for the authenticated overlay frame to flush", asyn
   const inline = await initializeInlineWhiteboard(chrome);
 
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:maximize",
+    type: "crux-whiteboard:maximize",
     diagramIndex: 0,
     channelId: "inline-channel",
   });
   const maximizePrepare = inline.posted.at(-1);
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "inline-channel",
     flushId: maximizePrepare.flushId,
   });
-  chrome.sendWhiteboardMessage({ type: "lavish-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
+  chrome.sendWhiteboardMessage({ type: "crux-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
   await flushPromises();
   await flushPromises();
 
   chrome.element("whiteboardClose").click();
   const closePrepare = chrome.postedToWhiteboard.at(-1);
-  assert.equal(closePrepare.type, "lavish-whiteboard:prepareTeardown");
+  assert.equal(closePrepare.type, "crux-whiteboard:prepareTeardown");
   assert.equal(closePrepare.channelId, "overlay-channel");
   assert.notEqual(chrome.element("whiteboardFrame").src, "about:blank");
 
   chrome.sendWhiteboardMessage({
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "overlay-channel",
     flushId: closePrepare.flushId,
   });
 
   assert.equal(chrome.element("whiteboardFrame").src, "about:blank");
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:resumeWhiteboard");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:resumeWhiteboard");
 });
 
 test("whiteboard fullscreen close accepts the resumed inline frame", async () => {
@@ -1129,25 +1129,25 @@ test("whiteboard fullscreen close accepts the resumed inline frame", async () =>
   const inline = await initializeInlineWhiteboard(chrome);
 
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:maximize",
+    type: "crux-whiteboard:maximize",
     diagramIndex: 0,
     channelId: "inline-channel",
   });
   const maximizePrepare = inline.posted.at(-1);
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "inline-channel",
     flushId: maximizePrepare.flushId,
   });
-  chrome.sendWhiteboardMessage({ type: "lavish-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
+  chrome.sendWhiteboardMessage({ type: "crux-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
   await flushPromises();
   await flushPromises();
 
   chrome.element("whiteboardClose").click();
   const closePrepare = chrome.postedToWhiteboard.at(-1);
   chrome.sendWhiteboardMessage({
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "overlay-channel",
     flushId: closePrepare.flushId,
@@ -1155,7 +1155,7 @@ test("whiteboard fullscreen close accepts the resumed inline frame", async () =>
 
   const resumed = chrome.createInlineWhiteboard();
   chrome.sendInlineWhiteboardMessage(resumed, {
-    type: "lavish-whiteboard:ready",
+    type: "crux-whiteboard:ready",
     diagramIndex: 0,
     diagramId: "mermaid-1",
     channelToken: "resumed-channel",
@@ -1163,7 +1163,7 @@ test("whiteboard fullscreen close accepts the resumed inline frame", async () =>
   await flushPromises();
   await flushPromises();
 
-  assert.equal(resumed.posted.at(-1).type, "lavish-whiteboard:init");
+  assert.equal(resumed.posted.at(-1).type, "crux-whiteboard:init");
   assert.equal(resumed.posted.at(-1).channelId, "resumed-channel");
 });
 
@@ -1177,11 +1177,11 @@ test("artifact reload waits for inline whiteboards to flush", async () => {
 
   chrome.element("reloadArtifact").click();
   const prepare = inline.posted.at(-1);
-  assert.equal(prepare.type, "lavish-whiteboard:prepareTeardown");
+  assert.equal(prepare.type, "crux-whiteboard:prepareTeardown");
   assert.equal(chrome.srcLoads.length, initialLoadCount);
 
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "inline-channel",
     flushId: prepare.flushId,
@@ -1212,11 +1212,11 @@ test("server restart flushes an authenticated inline whiteboard before reloading
   await flushPromises();
 
   const flush = inline.posted.at(-1);
-  assert.equal(flush.type, "lavish-whiteboard:flush");
+  assert.equal(flush.type, "crux-whiteboard:flush");
   assert.equal(chrome.reloadCount(), 0);
 
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:flushComplete",
+    type: "crux-whiteboard:flushComplete",
     diagramIndex: 0,
     channelId: "inline-channel",
     flushId: flush.flushId,
@@ -1241,18 +1241,18 @@ test("server restart flushes an authenticated overlay before reloading", async (
   });
   const inline = await initializeInlineWhiteboard(chrome);
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:maximize",
+    type: "crux-whiteboard:maximize",
     diagramIndex: 0,
     channelId: "inline-channel",
   });
   const teardown = inline.posted.at(-1);
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "inline-channel",
     flushId: teardown.flushId,
   });
-  chrome.sendWhiteboardMessage({ type: "lavish-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
+  chrome.sendWhiteboardMessage({ type: "crux-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
   await flushPromises();
   await flushPromises();
 
@@ -1262,11 +1262,11 @@ test("server restart flushes an authenticated overlay before reloading", async (
   await flushPromises();
 
   const flush = chrome.postedToWhiteboard.at(-1);
-  assert.equal(flush.type, "lavish-whiteboard:flush");
+  assert.equal(flush.type, "crux-whiteboard:flush");
   assert.equal(chrome.reloadCount(), 0);
 
   chrome.sendWhiteboardMessage({
-    type: "lavish-whiteboard:flushComplete",
+    type: "crux-whiteboard:flushComplete",
     diagramIndex: 0,
     channelId: "overlay-channel",
     flushId: flush.flushId,
@@ -1296,7 +1296,7 @@ test("server restart bounds the wait for a whiteboard flush", async () => {
   chrome.runTimers(100);
   await flushPromises();
 
-  assert.equal(inline.posted.at(-1).type, "lavish-whiteboard:flush");
+  assert.equal(inline.posted.at(-1).type, "crux-whiteboard:flush");
   chrome.runTimers(1500);
   await restart;
 
@@ -1320,27 +1320,27 @@ test("whiteboard close stays responsive while overlay initialization is pending"
   const inline = await initializeInlineWhiteboard(chrome);
 
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:maximize",
+    type: "crux-whiteboard:maximize",
     diagramIndex: 0,
     channelId: "inline-channel",
   });
   const maximizePrepare = inline.posted.at(-1);
   chrome.sendInlineWhiteboardMessage(inline, {
-    type: "lavish-whiteboard:teardownReady",
+    type: "crux-whiteboard:teardownReady",
     diagramIndex: 0,
     channelId: "inline-channel",
     flushId: maximizePrepare.flushId,
   });
 
   delayOverlaySources = true;
-  chrome.sendWhiteboardMessage({ type: "lavish-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
+  chrome.sendWhiteboardMessage({ type: "crux-whiteboard:ready", diagramIndex: 0, channelToken: "overlay-channel" });
   await flushPromises();
   chrome.element("whiteboardClose").click();
 
   assert.equal(chrome.element("whiteboardFrame").src, "about:blank");
-  assert.equal(chrome.postedToFrame.at(-1).type, "lavish:resumeWhiteboard");
+  assert.equal(chrome.postedToFrame.at(-1).type, "crux:resumeWhiteboard");
   assert.equal(
-    chrome.postedToWhiteboard.some((message) => message.type === "lavish-whiteboard:prepareTeardown"),
+    chrome.postedToWhiteboard.some((message) => message.type === "crux-whiteboard:prepareTeardown"),
     false,
   );
 

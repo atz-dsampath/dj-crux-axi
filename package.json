@@ -1,16 +1,15 @@
 {
-  "name": "lavish-axi",
+  "name": "crux-axi",
   "version": "0.1.43",
   "packageManager": "pnpm@11.1.1",
-  "description": "HTML is the new markdown. Lavish is the new editor for your HTML artifacts.",
+  "description": "HTML is the new markdown. Crux is the new editor for your HTML artifacts.",
   "type": "module",
   "bin": {
-    "lavish-axi": "dist/cli.mjs"
+    "crux-axi": "dist/cli.mjs"
   },
   "files": [
     "dist",
-    "skills/lavish",
-    "lavish-editor-marketing/renders/lavish-editor-marketing.gif",
+    "skills/crux-axi",
     "LICENSE",
     "THIRD-PARTY-NOTICES.md",
     "README.md"
@@ -66,12 +65,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kunchenguid/lavish-axi.git"
+    "url": "git+https://github.com/atz-dsampath/dj-crux-axi.git"
   },
   "bugs": {
-    "url": "https://github.com/kunchenguid/lavish-axi/issues"
+    "url": "https://github.com/atz-dsampath/dj-crux-axi/issues"
   },
-  "homepage": "https://github.com/kunchenguid/lavish-axi#readme",
+  "homepage": "https://github.com/atz-dsampath/dj-crux-axi#readme",
   "publishConfig": {
     "access": "public"
   }

@@ -2,7 +2,7 @@
 
 import * as mermaidHelpers from "./mermaid-node.js";
 
-export const LAVISH_INTERNAL_QUEUE_KEY = "_lavishQueueKey";
+export const CRUX_INTERNAL_QUEUE_KEY = "_cruxQueueKey";
 
 export const MODE_TOGGLE_HOTKEY_KEY = "i";
 
@@ -13,7 +13,7 @@ export function isModeToggleHotkeyEvent(event) {
 
 // Derive the browser-only replacement key used to collapse unsent updates for the same input.
 // The key is stripped by the chrome before prompts are sent to the server or returned by poll.
-export function deriveLavishQueueKey(element, options = {}) {
+export function deriveCruxQueueKey(element, options = {}) {
   function stringValue(value) {
     return value === null || value === undefined ? "" : String(value);
   }
@@ -62,7 +62,7 @@ export function deriveLavishQueueKey(element, options = {}) {
     const scope = closestElementMatching(el, "form,fieldset") || el?.parentElement || el;
     const tag = tagName(scope) || "scope";
     const explicit = stringValue(
-      attributeValue(scope, "data-lavish-question") || attributeValue(scope, "id") || attributeValue(scope, "name"),
+      attributeValue(scope, "data-crux-question") || attributeValue(scope, "id") || attributeValue(scope, "name"),
     ).trim();
     if (explicit) return `${tag}:${explicit}`;
     return elementPath(scope) || tag;
@@ -82,8 +82,8 @@ export function deriveLavishQueueKey(element, options = {}) {
     return stringValue(options.queueKey).trim();
   }
 
-  const question = closestElementMatching(element, "[data-lavish-question]");
-  const questionKey = stringValue(attributeValue(question, "data-lavish-question")).trim();
+  const question = closestElementMatching(element, "[data-crux-question]");
+  const questionKey = stringValue(attributeValue(question, "data-crux-question")).trim();
   if (questionKey) return `question:${questionKey}`;
 
   const tag = tagName(element);
@@ -479,7 +479,7 @@ export function createArtifactSdk(
       return;
     }
     const iframe = document.createElement("iframe");
-    iframe.setAttribute("data-lavish-ui", "whiteboard-inline");
+    iframe.setAttribute("data-crux-ui", "whiteboard-inline");
     iframe.setAttribute("title", "Excalidraw whiteboard");
     // Stricter than (and independent of) this artifact frame's own sandbox.
     iframe.setAttribute("sandbox", "allow-scripts allow-popups");
@@ -517,11 +517,11 @@ export function createArtifactSdk(
     // While the chrome overlay edits a diagram fullscreen, its inline frame is
     // parked on about:blank so two editors never autosave the same sidecar;
     // resume reboots the frame, which re-inits from the latest saved scene.
-    if (msg.type === "lavish:suspendWhiteboard") {
+    if (msg.type === "crux:suspendWhiteboard") {
       const target = whiteboardEntryByIndex(msg.diagramIndex);
       if (target) target.iframe.src = "about:blank";
     }
-    if (msg.type === "lavish:resumeWhiteboard") {
+    if (msg.type === "crux:resumeWhiteboard") {
       const target = whiteboardEntryByIndex(msg.diagramIndex);
       if (target) target.iframe.src = whiteboardFrameSrc(target);
     }
@@ -592,7 +592,7 @@ export function createArtifactSdk(
     if (range.collapsed || !text) return null;
 
     const ancestor = closestElement(range.commonAncestorContainer);
-    if (isLavishUi(ancestor) || isLavishAction(ancestor) || isInteractiveControl(ancestor)) return null;
+    if (isCruxUi(ancestor) || isCruxAction(ancestor) || isInteractiveControl(ancestor)) return null;
 
     const commonAncestorSelector = selector(ancestor);
     const target = {
@@ -615,26 +615,26 @@ export function createArtifactSdk(
     };
   }
 
-  function isLavishUi(el) {
-    return !!(el && el.closest && el.closest("[data-lavish-ui]"));
+  function isCruxUi(el) {
+    return !!(el && el.closest && el.closest("[data-crux-ui]"));
   }
 
-  function isLavishAction(el) {
-    return !!(el && el.closest && el.closest("[data-lavish-action]"));
+  function isCruxAction(el) {
+    return !!(el && el.closest && el.closest("[data-crux-action]"));
   }
 
   // Native interactive controls (radios, checkboxes, inputs, selects, buttons,
   // labels, disclosure summaries, editable regions) should toggle/focus/type
   // natively instead of triggering annotation, just like elements marked with
-  // data-lavish-action.
+  // data-crux-action.
   function isInteractiveControl(el) {
     return isNativeInteractive(el);
   }
 
   function highlightElement(el) {
     if (!el) return;
-    el.style.outline = "var(--lavish-annotate-outline,2px solid #f4c95d)";
-    el.style.outlineOffset = "var(--lavish-annotate-offset,2px)";
+    el.style.outline = "var(--crux-annotate-outline,2px solid #f4c95d)";
+    el.style.outlineOffset = "var(--crux-annotate-offset,2px)";
   }
 
   function clearHighlight(el) {
@@ -643,7 +643,7 @@ export function createArtifactSdk(
 
   function clearTextHighlight() {
     if (!shadow) return;
-    for (const el of [...shadow.querySelectorAll(".lavish-text-highlight")]) el.remove();
+    for (const el of [...shadow.querySelectorAll(".crux-text-highlight")]) el.remove();
   }
 
   function highlightTextRange(range) {
@@ -652,7 +652,7 @@ export function createArtifactSdk(
     for (const rect of [...range.getClientRects()]) {
       if (rect.width <= 0 || rect.height <= 0) continue;
       const mark = document.createElement("div");
-      mark.className = "lavish-text-highlight";
+      mark.className = "crux-text-highlight";
       mark.style.left = rect.left + "px";
       mark.style.top = rect.top + "px";
       mark.style.width = rect.width + "px";
@@ -663,12 +663,12 @@ export function createArtifactSdk(
 
   function setAnnotationMode(enabled) {
     annotationMode = !!enabled;
-    let style = document.getElementById("lavish-cursor-style");
+    let style = document.getElementById("crux-cursor-style");
     if (annotationMode && !style) {
       style = document.createElement("style");
-      style.id = "lavish-cursor-style";
+      style.id = "crux-cursor-style";
       style.textContent =
-        ":root{--lavish-accent:#f4c95d;--lavish-annotate-outline:2px solid var(--lavish-accent);--lavish-annotate-offset:2px}*{cursor:default!important}[data-lavish-action],[data-lavish-action] *{cursor:pointer!important}input,textarea,[contenteditable]:not([contenteditable='false']){cursor:text!important}button,select,label,option,input[type='button'],input[type='submit'],input[type='reset'],input[type='checkbox'],input[type='radio'],input[type='file'],input[type='color'],input[type='range'],input[type='image']{cursor:pointer!important}";
+        ":root{--crux-accent:#f4c95d;--crux-annotate-outline:2px solid var(--crux-accent);--crux-annotate-offset:2px}*{cursor:default!important}[data-crux-action],[data-crux-action] *{cursor:pointer!important}input,textarea,[contenteditable]:not([contenteditable='false']){cursor:text!important}button,select,label,option,input[type='button'],input[type='submit'],input[type='reset'],input[type='checkbox'],input[type='radio'],input[type='file'],input[type='color'],input[type='range'],input[type='image']{cursor:pointer!important}";
       document.head.appendChild(style);
     }
     if (!annotationMode && style) style.remove();
@@ -681,13 +681,13 @@ export function createArtifactSdk(
 
   function queuePrompt(prompt, options = {}) {
     const originElement = options.element || document.activeElement || document.body;
-    /** @type {{ uid: string, prompt: string, selector: string, tag: string, text: string, target?: unknown, _lavishQueueKey?: string }} */
+    /** @type {{ uid: string, prompt: string, selector: string, tag: string, text: string, target?: unknown, _cruxQueueKey?: string }} */
     const item = {
       ...context(originElement),
       prompt: String(prompt || ""),
     };
     const queueKey = typeof deriveQueueKey === "function" ? deriveQueueKey(originElement, options) : "";
-    if (queueKey) item._lavishQueueKey = String(queueKey);
+    if (queueKey) item._cruxQueueKey = String(queueKey);
 
     if (options.uid) item.uid = String(options.uid);
     if (options.selector) item.selector = String(options.selector);
@@ -696,22 +696,22 @@ export function createArtifactSdk(
     if (options.target) item.target = options.target;
     if (options.data) item.prompt += "\n\nContext data:\n" + JSON.stringify(options.data, null, 2);
 
-    parent.postMessage({ type: "lavish:queuePrompt", prompt: item }, "*");
+    parent.postMessage({ type: "crux:queuePrompt", prompt: item }, "*");
   }
 
   function sendQueuedPrompts() {
-    parent.postMessage({ type: "lavish:sendQueuedPrompts" }, "*");
+    parent.postMessage({ type: "crux:sendQueuedPrompts" }, "*");
   }
 
   function endSession() {
-    parent.postMessage({ type: "lavish:endSession" }, "*");
+    parent.postMessage({ type: "crux:endSession" }, "*");
   }
 
   function snapshot() {
     const lines = [];
 
     function walk(el, depth) {
-      if (!(el instanceof Element) || depth > 6 || isLavishUi(el)) return;
+      if (!(el instanceof Element) || depth > 6 || isCruxUi(el)) return;
 
       const c = context(el);
       const name = c.text ? ' "' + c.text.slice(0, 80).replace(/"/g, "'") + '"' : "";
@@ -756,7 +756,7 @@ export function createArtifactSdk(
   }
 
   function isRequiredControl(el) {
-    if (!el?.matches?.("button,input,select,textarea,a[href],summary,[data-lavish-action],[role]")) return false;
+    if (!el?.matches?.("button,input,select,textarea,a[href],summary,[data-crux-action],[role]")) return false;
     if (el.matches("input[type='hidden'],[disabled],[aria-disabled='true']")) return false;
     if (!el.hasAttribute("role")) return true;
     return new Set(["button", "link", "checkbox", "radio", "switch", "textbox", "combobox"]).has(
@@ -790,7 +790,7 @@ export function createArtifactSdk(
   }
 
   function isVisibleForLayoutAudit(el, rect = el.getBoundingClientRect()) {
-    if (!el || isLavishUi(el) || rect.width <= 0 || rect.height <= 0) return false;
+    if (!el || isCruxUi(el) || rect.width <= 0 || rect.height <= 0) return false;
     let node = el;
     while (node && node.nodeType === 1) {
       const style = getComputedStyle(node);
@@ -912,7 +912,7 @@ export function createArtifactSdk(
   }
 
   function isDiagramLayoutElement(el) {
-    return Boolean(el?.closest?.(".mermaid,svg,[data-lavish-ui]"));
+    return Boolean(el?.closest?.(".mermaid,svg,[data-crux-ui]"));
   }
 
   function hasVisualMaskAncestor(el) {
@@ -966,7 +966,7 @@ export function createArtifactSdk(
 
   function collectLayoutAuditElements() {
     return [...(document.body?.querySelectorAll("*") || [])]
-      .filter((el) => el instanceof Element && !isLavishUi(el))
+      .filter((el) => el instanceof Element && !isCruxUi(el))
       .slice(0, 800);
   }
 
@@ -1190,7 +1190,7 @@ export function createArtifactSdk(
 
   function opaqueSiblingBlocker(el, point, animationTargets) {
     const top = document.elementFromPoint(point.x, point.y);
-    if (!(top instanceof Element) || top === el || el.contains(top) || top.contains(el) || isLavishUi(top)) return null;
+    if (!(top instanceof Element) || top === el || el.contains(top) || top.contains(el) || isCruxUi(top)) return null;
 
     const targetAncestors = [];
     let targetNode = el;
@@ -1366,7 +1366,7 @@ export function createArtifactSdk(
     return document
       .getAnimations()
       .filter((animation) => ["running", "pending"].includes(String(animation.playState)))
-      .filter((animation) => !isLavishUi(animationTarget(animation)));
+      .filter((animation) => !isCruxUi(animationTarget(animation)));
   }
 
   function activeAnimationTargets() {
@@ -1401,7 +1401,7 @@ export function createArtifactSdk(
     const signature = JSON.stringify(severe);
     if (signature === lastLayoutAuditSignature) return;
     lastLayoutAuditSignature = signature;
-    parent.postMessage({ type: "lavish:layoutWarnings", layout_warnings: severe }, "*");
+    parent.postMessage({ type: "crux:layoutWarnings", layout_warnings: severe }, "*");
   }
 
   async function runLayoutAudit(runId) {
@@ -1440,20 +1440,20 @@ export function createArtifactSdk(
     if (shadow) return shadow;
 
     const host = document.createElement("div");
-    host.className = "lavish-annotation-root";
-    host.setAttribute("data-lavish-ui", "annotation-root");
+    host.className = "crux-annotation-root";
+    host.setAttribute("data-crux-ui", "annotation-root");
     document.documentElement.appendChild(host);
 
     shadow = host.attachShadow({ mode: "open" });
     const style = document.createElement("style");
-    style.textContent = `:host{all:initial;position:fixed;z-index:2147483647;left:0;top:0;color-scheme:dark;--ink-900:#0f1115;--ink-800:#11141a;--ink-700:#171a21;--ink-600:#1c212b;--steel-700:#2a2f3a;--steel-600:#303745;--steel-500:#3c4557;--steel-400:#8c96aa;--steel-300:#aeb6c6;--steel-200:#b9c0cf;--steel-100:#d8deea;--cream-50:#fffbf3;--cream-100:#f7f3ea;--cream-200:#e8e1cf;--brass-500:#f4c95d;--brass-400:#ffd877;--brass-ink:#17130a;--bg:var(--ink-900);--bg-panel:var(--ink-800);--bg-elevated:var(--ink-600);--fg:var(--cream-100);--fg-faint:var(--steel-300);--border:var(--steel-600);--accent:#f4c95d;--accent-hover:#ffd877;--font-sans:Geist,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--radius-md:10px;--radius-xl:14px;--shadow-floating:0 20px 70px rgba(0,0,0,.35);font-family:var(--font-sans)}*{box-sizing:border-box}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.lavish-text-highlight{position:fixed;pointer-events:none;background:rgba(244,201,93,.28);border-radius:2px;box-shadow:0 0 0 1px rgba(244,201,93,.45)}.lavish-annotation-card{position:fixed;width:min(320px,calc(100vw - 24px));padding:12px;border-radius:var(--radius-xl);background:var(--bg-panel);color:var(--fg);border:1px solid var(--accent);box-shadow:var(--shadow-floating);font:14px/1.4 var(--font-sans)}.lavish-heading{font-weight:700;margin-bottom:6px}.lavish-annotation-card textarea{width:100%;min-height:86px;resize:vertical;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg);color:var(--fg);padding:9px;font:inherit;font-family:var(--font-sans)}.lavish-annotation-card textarea::placeholder{color:var(--fg-faint)}.lavish-annotation-card .lavish-hint{margin-top:6px;font-size:11px;color:var(--fg-faint)}.lavish-annotation-card .lavish-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}.lavish-annotation-card button{border:0;border-radius:var(--radius-md);padding:8px 10px;font-family:var(--font-sans);font-size:13px;font-weight:700;cursor:pointer}.lavish-annotation-card button:active{opacity:.85}.lavish-annotation-card .lavish-send{background:var(--accent);color:var(--brass-ink)}.lavish-annotation-card .lavish-send:hover{background:var(--accent-hover)}.lavish-annotation-card .lavish-cancel{background:var(--steel-700);color:var(--fg)}`;
+    style.textContent = `:host{all:initial;position:fixed;z-index:2147483647;left:0;top:0;color-scheme:dark;--ink-900:#0f1115;--ink-800:#11141a;--ink-700:#171a21;--ink-600:#1c212b;--steel-700:#2a2f3a;--steel-600:#303745;--steel-500:#3c4557;--steel-400:#8c96aa;--steel-300:#aeb6c6;--steel-200:#b9c0cf;--steel-100:#d8deea;--cream-50:#fffbf3;--cream-100:#f7f3ea;--cream-200:#e8e1cf;--brass-500:#f4c95d;--brass-400:#ffd877;--brass-ink:#17130a;--bg:var(--ink-900);--bg-panel:var(--ink-800);--bg-elevated:var(--ink-600);--fg:var(--cream-100);--fg-faint:var(--steel-300);--border:var(--steel-600);--accent:#f4c95d;--accent-hover:#ffd877;--font-sans:Geist,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--radius-md:10px;--radius-xl:14px;--shadow-floating:0 20px 70px rgba(0,0,0,.35);font-family:var(--font-sans)}*{box-sizing:border-box}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.crux-text-highlight{position:fixed;pointer-events:none;background:rgba(244,201,93,.28);border-radius:2px;box-shadow:0 0 0 1px rgba(244,201,93,.45)}.crux-annotation-card{position:fixed;width:min(320px,calc(100vw - 24px));padding:12px;border-radius:var(--radius-xl);background:var(--bg-panel);color:var(--fg);border:1px solid var(--accent);box-shadow:var(--shadow-floating);font:14px/1.4 var(--font-sans)}.crux-heading{font-weight:700;margin-bottom:6px}.crux-annotation-card textarea{width:100%;min-height:86px;resize:vertical;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg);color:var(--fg);padding:9px;font:inherit;font-family:var(--font-sans)}.crux-annotation-card textarea::placeholder{color:var(--fg-faint)}.crux-annotation-card .crux-hint{margin-top:6px;font-size:11px;color:var(--fg-faint)}.crux-annotation-card .crux-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}.crux-annotation-card button{border:0;border-radius:var(--radius-md);padding:8px 10px;font-family:var(--font-sans);font-size:13px;font-weight:700;cursor:pointer}.crux-annotation-card button:active{opacity:.85}.crux-annotation-card .crux-send{background:var(--accent);color:var(--brass-ink)}.crux-annotation-card .crux-send:hover{background:var(--accent-hover)}.crux-annotation-card .crux-cancel{background:var(--steel-700);color:var(--fg)}`;
     shadow.appendChild(style);
     return shadow;
   }
 
   function closeCard() {
     if (shadow) {
-      for (const el of [...shadow.querySelectorAll(".lavish-annotation-card")]) el.remove();
+      for (const el of [...shadow.querySelectorAll(".crux-annotation-card")]) el.remove();
     }
     clearHighlight(hovered);
     clearHighlight(selected);
@@ -1478,7 +1478,7 @@ export function createArtifactSdk(
 
     const rect = options.range ? options.range.getBoundingClientRect() : anchor.getBoundingClientRect();
     const card = document.createElement("div");
-    card.className = "lavish-annotation-card";
+    card.className = "crux-annotation-card";
     const nodeLabel = c.tag === "mermaid-node" ? c.target?.label || c.text || "" : "";
     const heading =
       c.tag === "text"
@@ -1493,13 +1493,13 @@ export function createArtifactSdk(
           ? "Tell the agent what to change about this diagram node..."
           : "Tell the agent what to change about this element...";
     card.innerHTML =
-      '<div class="lavish-heading">' +
+      '<div class="crux-heading">' +
       heading +
       '</div><textarea placeholder="' +
       placeholder +
-      '"></textarea><div class="lavish-hint">Enter to queue &middot; ' +
+      '"></textarea><div class="crux-hint">Enter to queue &middot; ' +
       (/Mac|iP(hone|ad|od)/.test(navigator.platform) ? "⌘" : "Ctrl") +
-      '+Enter to send now</div><div class="lavish-row"><button class="lavish-cancel" type="button">Cancel</button><button class="lavish-send" type="button">Queue</button></div>';
+      '+Enter to send now</div><div class="crux-row"><button class="crux-cancel" type="button">Cancel</button><button class="crux-send" type="button">Queue</button></div>';
     root.appendChild(card);
 
     const left = Math.min(Math.max(12, rect.left), window.innerWidth - card.offsetWidth - 12);
@@ -1508,8 +1508,8 @@ export function createArtifactSdk(
     card.style.top = top + "px";
 
     const textarea = /** @type {HTMLTextAreaElement | null} */ (card.querySelector("textarea"));
-    const cancelButton = /** @type {HTMLButtonElement | null} */ (card.querySelector(".lavish-cancel"));
-    const sendButton = /** @type {HTMLButtonElement | null} */ (card.querySelector(".lavish-send"));
+    const cancelButton = /** @type {HTMLButtonElement | null} */ (card.querySelector(".crux-cancel"));
+    const sendButton = /** @type {HTMLButtonElement | null} */ (card.querySelector(".crux-send"));
     if (!textarea || !cancelButton || !sendButton) return;
 
     cancelButton.onclick = closeCard;
@@ -1530,22 +1530,22 @@ export function createArtifactSdk(
     setTimeout(() => textarea.focus(), 0);
   }
 
-  /** @type {Window & { lavish?: unknown }} */ (window).lavish = {
+  /** @type {Window & { crux?: unknown }} */ (window).crux = {
     queuePrompt,
     sendQueuedPrompts,
     endSession,
     getQueuedPrompts: () => [],
-    setStatus: (message) => parent.postMessage({ type: "lavish:status", message: String(message) }, "*"),
+    setStatus: (message) => parent.postMessage({ type: "crux:status", message: String(message) }, "*"),
     snapshot,
   };
 
   window.addEventListener("message", (event) => {
     const msg = event.data || {};
-    if (msg.type === "lavish:setAnnotationMode") setAnnotationMode(msg.enabled);
-    if (msg.type === "lavish:requestSnapshot") {
-      parent.postMessage({ type: "lavish:snapshot", snapshot: snapshot() }, "*");
+    if (msg.type === "crux:setAnnotationMode") setAnnotationMode(msg.enabled);
+    if (msg.type === "crux:requestSnapshot") {
+      parent.postMessage({ type: "crux:snapshot", snapshot: snapshot() }, "*");
     }
-    if (msg.type === "lavish:restoreScroll") {
+    if (msg.type === "crux:restoreScroll") {
       window.scrollTo(Number(msg.x) || 0, Number(msg.y) || 0);
     }
   });
@@ -1559,7 +1559,7 @@ export function createArtifactSdk(
     (event) => {
       if (!isModeToggleHotkeyEvent(event)) return;
       event.preventDefault();
-      parent.postMessage({ type: "lavish:toggleAnnotationMode" }, "*");
+      parent.postMessage({ type: "crux:toggleAnnotationMode" }, "*");
     },
     true,
   );
@@ -1573,7 +1573,7 @@ export function createArtifactSdk(
       if (scrollFrame) return;
       scrollFrame = window.requestAnimationFrame(() => {
         scrollFrame = 0;
-        parent.postMessage({ type: "lavish:scroll", x: window.scrollX, y: window.scrollY }, "*");
+        parent.postMessage({ type: "crux:scroll", x: window.scrollX, y: window.scrollY }, "*");
       });
     },
     { passive: true },
@@ -1582,12 +1582,7 @@ export function createArtifactSdk(
   document.addEventListener(
     "mouseover",
     (event) => {
-      if (
-        !annotationMode ||
-        isLavishUi(event.target) ||
-        isLavishAction(event.target) ||
-        isInteractiveControl(event.target)
-      )
+      if (!annotationMode || isCruxUi(event.target) || isCruxAction(event.target) || isInteractiveControl(event.target))
         return;
       const target = annotationTargetEl(event.target);
       if (target === selected) return;
@@ -1612,12 +1607,7 @@ export function createArtifactSdk(
   document.addEventListener(
     "mouseup",
     (event) => {
-      if (
-        !annotationMode ||
-        isLavishUi(event.target) ||
-        isLavishAction(event.target) ||
-        isInteractiveControl(event.target)
-      )
+      if (!annotationMode || isCruxUi(event.target) || isCruxAction(event.target) || isInteractiveControl(event.target))
         return;
 
       const c = textSelectionContext(document.getSelection());
@@ -1632,12 +1622,7 @@ export function createArtifactSdk(
   document.addEventListener(
     "click",
     (event) => {
-      if (
-        !annotationMode ||
-        isLavishUi(event.target) ||
-        isLavishAction(event.target) ||
-        isInteractiveControl(event.target)
-      )
+      if (!annotationMode || isCruxUi(event.target) || isCruxAction(event.target) || isInteractiveControl(event.target))
         return;
       event.preventDefault();
       event.stopPropagation();

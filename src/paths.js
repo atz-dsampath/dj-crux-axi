@@ -14,10 +14,10 @@ const WILDCARD_BIND_LOOPBACK = new Map([
   ["::", IPV6_LOOPBACK_HOST],
 ]);
 
-// Address the server binds to (LAVISH_AXI_HOST). Defaults to loopback. A wildcard value
+// Address the server binds to (CRUX_AXI_HOST). Defaults to loopback. A wildcard value
 // (0.0.0.0 or ::) binds every interface.
 export function bindHost(env = process.env) {
-  return env.LAVISH_AXI_HOST?.trim() || LOOPBACK_HOST;
+  return env.CRUX_AXI_HOST?.trim() || LOOPBACK_HOST;
 }
 
 // Host the CLI uses to reach the server it spawned. A wildcard bind address can't be
@@ -27,18 +27,18 @@ export function clientHost(env = process.env) {
   return WILDCARD_BIND_LOOPBACK.get(host) ?? host;
 }
 
-// Hostname written into the session URLs the server generates (LAVISH_AXI_LINK_HOST).
+// Hostname written into the session URLs the server generates (CRUX_AXI_LINK_HOST).
 // Defaults to the host the CLI dials.
 export function linkHost(env = process.env) {
-  return env.LAVISH_AXI_LINK_HOST?.trim() || clientHost(env);
+  return env.CRUX_AXI_LINK_HOST?.trim() || clientHost(env);
 }
 
 // Extra Host header values the server's DNS-rebinding guard accepts beyond the
-// loopback names and the resolved bind/link host, set via LAVISH_AXI_ALLOWED_HOSTS
+// loopback names and the resolved bind/link host, set via CRUX_AXI_ALLOWED_HOSTS
 // (whitespace-separated). A lone "*" disables the guard entirely - an explicit
 // opt-out for operators fronting the server with their own auth/proxy.
 export function extraAllowedHosts(env = process.env) {
-  return (env.LAVISH_AXI_ALLOWED_HOSTS || "").split(/\s+/).filter(Boolean);
+  return (env.CRUX_AXI_ALLOWED_HOSTS || "").split(/\s+/).filter(Boolean);
 }
 
 // Brackets an IPv6 literal so it can be safely interpolated into a URL authority.
@@ -49,7 +49,7 @@ export function hostForUrl(host) {
 }
 
 export function stateDir() {
-  return process.env.LAVISH_AXI_STATE_DIR || path.join(os.homedir(), ".lavish-axi");
+  return process.env.CRUX_AXI_STATE_DIR || path.join(os.homedir(), ".crux-axi");
 }
 
 export function stateFile() {
@@ -65,5 +65,5 @@ export async function ensureStateDir() {
 }
 
 export function defaultPort() {
-  return Number(process.env.LAVISH_AXI_PORT || 4387);
+  return Number(process.env.CRUX_AXI_PORT || 4387);
 }

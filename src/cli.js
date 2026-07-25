@@ -26,8 +26,8 @@ const COMMANDS = new Set(["open", "poll", "end", "stop", "server", "playbook", "
 // the bare-arg normalization below would rewrite them into the hidden `open` command.
 const RESERVED = new Set(RESERVED_COMMANDS);
 const DESCRIPTION =
-  "Lavish Editor helps agents turn rich HTML artifacts into collaborative human review surfaces. Whenever you are about to give user a complex response that will be easier to understand via a rich / interactive page, consider using Lavish Editor. " +
-  "First generate an interactive HTML artifact according to user request, then run `lavish-axi <html-file>` so the user can visually review it, annotate elements or selected text, queue prompts, and send feedback back through `lavish-axi poll`.";
+  "Crux Editor helps agents turn rich HTML artifacts into collaborative human review surfaces. Whenever you are about to give user a complex response that will be easier to understand via a rich / interactive page, consider using Crux Editor. " +
+  "First generate an interactive HTML artifact according to user request, then run `crux-axi <html-file>` so the user can visually review it, annotate elements or selected text, queue prompts, and send feedback back through `crux-axi poll`.";
 export const POLL_WAKE_PATH_RULES = Object.freeze([
   "Keep the poll in the foreground by default and let it return the feedback directly to the agent.",
   "A background poll is allowed only through a harness-native tracked background-job facility whose completion result is guaranteed to resume or notify the same agent.",
@@ -42,7 +42,7 @@ const CODEX_POLL_WAKE_PATH_GUIDANCE =
   "Codex detected: completed background tasks may not resume Codex automatically, so keep the poll attached to the active turn.";
 // Inlined at build time from package.json; falls back to reading package.json so source-run tests work.
 export const VERSION =
-  process.env.LAVISH_AXI_BUILD_VERSION ||
+  process.env.CRUX_AXI_BUILD_VERSION ||
   JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
 export function detectInvokingAgent(env = process.env) {
@@ -66,7 +66,7 @@ export async function run(argv) {
   const isTopLevelHelp = argv.length === 1 && argv[0] === "--help";
   const command = telemetryCommandName(argv);
   const telemetry = initDefaultTelemetry({
-    app: "lavish-axi",
+    app: "crux-axi",
     version: VERSION,
     platform: process.platform,
     arch: process.arch,
@@ -80,7 +80,7 @@ export async function run(argv) {
       topLevelHelp: createTopLevelHelp({ agent }),
       home: async () =>
         createHomeOutput({
-          bin: process.argv[1] || "lavish-axi",
+          bin: process.argv[1] || "crux-axi",
           sessions: isTopLevelHelp ? [] : await visibleSessions(),
           includeSessions: !isTopLevelHelp,
           agent,
@@ -160,18 +160,18 @@ export function createHomeOutput({ bin, sessions, includeSessions = true, agent 
     ],
     playbooks: listPlaybooks(),
     help: [
-      "Run `lavish-axi <html-file>` to open or resume a Lavish Editor session. If the user explicitly ended the session from the browser, this refuses to reopen it and explains why instead of reopening uninvited - pass `--reopen` only when the user asks for further review or something important needs their visual attention",
-      "Unless the user specifies another location, create HTML artifacts in the current working directory under `.lavish/`",
-      "Lavish serves the html file through a local express.js server. If your html needs to reference other filesystem assets such as images, CSS, fonts, and local scripts, copy them into the same directory as the HTML file, then reference them with relative paths from that directory. Never prepend `/` to those asset paths - root paths won't work",
-      `Run \`lavish-axi poll <html-file>\` to wait for user feedback or browser-proven severe layout failures. It long-polls and stays silent until the user sends feedback, ends the session, or the real browser proves meaningful content is inaccessible or unusable, so leave it running - never kill it. Repair and re-check every returned layout failure before involving the human; cosmetic, intentional, transient, tiny, and uncertain observations stay silent. ${pollExecutionGuidance({ agent })} ${POLL_SEND_AND_END_RULE}`,
+      "Run `crux-axi <html-file>` to open or resume a Crux Editor session. If the user explicitly ended the session from the browser, this refuses to reopen it and explains why instead of reopening uninvited - pass `--reopen` only when the user asks for further review or something important needs their visual attention",
+      "Unless the user specifies another location, create HTML artifacts in the current working directory under `.crux/`",
+      "Crux serves the html file through a local express.js server. If your html needs to reference other filesystem assets such as images, CSS, fonts, and local scripts, copy them into the same directory as the HTML file, then reference them with relative paths from that directory. Never prepend `/` to those asset paths - root paths won't work",
+      `Run \`crux-axi poll <html-file>\` to wait for user feedback or browser-proven severe layout failures. It long-polls and stays silent until the user sends feedback, ends the session, or the real browser proves meaningful content is inaccessible or unusable, so leave it running - never kill it. Repair and re-check every returned layout failure before involving the human; cosmetic, intentional, transient, tiny, and uncertain observations stay silent. ${pollExecutionGuidance({ agent })} ${POLL_SEND_AND_END_RULE}`,
       'Rendered Mermaid diagrams in `.mermaid` containers become embedded, editable Excalidraw whiteboards in the browser (click a diagram to unlock editing; a Fullscreen action opens it over the whole viewport) - flowchart, sequence, class, ER, and state diagrams convert to editable shapes; other types embed as an image to draw on. Scenes autosave locally; when a reload detects a changed Mermaid source, the reviewer explicitly chooses to re-convert and discard saved edits or keep editing the saved scene. Standalone and exported copies still render plain Mermaid. Queue feedback adds a prompt to the Conversation panel; when the user sends it, poll returns a tag "whiteboard" prompt carrying a bounded edit summary plus local scenePath (.excalidraw JSON) and previewPath (PNG) files - read the summary first, open the files only when needed, then apply the edits by updating the Mermaid source in the artifact (never try to write the scene back)',
-      "Run `lavish-axi end <html-file>` to end a session as the agent - ending it this way still allows a plain reopen later. When the user ends it from the browser instead, a later `lavish-axi <html-file>` refuses to reopen it without `--reopen`",
-      "Run `lavish-axi export <html-file> [--out <path>]` to write a portable copy of the artifact - one HTML file with its LOCAL assets inlined - so it opens with no Lavish server and no sibling files. Remote CDN/font references are left as links, so it needs network to render those. Users can also export from the browser chrome's overflow menu",
-      "Run `lavish-axi share <html-file> [--password <pw>] [--token <t>]` to publish the artifact on ht-ml.app (https://ht-ml.app), a third-party hosting service not part of Lavish, and get back a visitable URL. Shares are PUBLIC by default, so anyone with the link can open them. Pass --password to publish a PRIVATE password-protected page; viewers must supply the password to view. Local assets are inlined; remote refs load over the network. It returns the url plus a secret update_key for managing the page later. Use --token or LAVISH_AXI_HTML_APP_TOKEN only when you have an optional bearer token; it is never required. Users can also publish from the browser chrome's overflow menu",
-      "Run `lavish-axi stop` to shut down the background server (it also self-stops when idle or after the last session ends with nothing connected)",
-      `Run \`lavish-axi playbook <playbook_id>\` for focused artifact guidance. ${PLAYBOOK_ROUTER_HELP}`,
+      "Run `crux-axi end <html-file>` to end a session as the agent - ending it this way still allows a plain reopen later. When the user ends it from the browser instead, a later `crux-axi <html-file>` refuses to reopen it without `--reopen`",
+      "Run `crux-axi export <html-file> [--out <path>]` to write a portable copy of the artifact - one HTML file with its LOCAL assets inlined - so it opens with no Crux server and no sibling files. Remote CDN/font references are left as links, so it needs network to render those. Users can also export from the browser chrome's overflow menu",
+      "Run `crux-axi share <html-file> [--password <pw>] [--token <t>]` to publish the artifact on ht-ml.app (https://ht-ml.app), a third-party hosting service not part of Crux, and get back a visitable URL. Shares are PUBLIC by default, so anyone with the link can open them. Pass --password to publish a PRIVATE password-protected page; viewers must supply the password to view. Local assets are inlined; remote refs load over the network. It returns the url plus a secret update_key for managing the page later. Use --token or CRUX_AXI_HTML_APP_TOKEN only when you have an optional bearer token; it is never required. Users can also publish from the browser chrome's overflow menu",
+      "Run `crux-axi stop` to shut down the background server (it also self-stops when idle or after the last session ends with nothing connected)",
+      `Run \`crux-axi playbook <playbook_id>\` for focused artifact guidance. ${PLAYBOOK_ROUTER_HELP}`,
       DESIGN_SYSTEM_HINT,
-      "Use lavish-axi when the user asks for a visual artifact, HTML explainer, interactive prototype, review surface, product or technical plan, comparison, report, or browser-based feedback loop",
+      "Use crux-axi when the user asks for a visual artifact, HTML explainer, interactive prototype, review surface, product or technical plan, comparison, report, or browser-based feedback loop",
     ],
   };
 }
@@ -181,14 +181,14 @@ export function createPlaybookOutput(args) {
   if (!id) {
     return {
       playbooks: listPlaybooks(),
-      help: ["Run `lavish-axi playbook <playbook_id>` for focused artifact guidance", PLAYBOOK_ROUTER_HELP],
+      help: ["Run `crux-axi playbook <playbook_id>` for focused artifact guidance", PLAYBOOK_ROUTER_HELP],
     };
   }
 
   const playbook = findPlaybook(id);
   if (!playbook) {
     throw new AxiError(`Unknown playbook: ${id}`, "VALIDATION_ERROR", [
-      `Run \`lavish-axi playbook\` to list known IDs: ${playbookIds().join(", ")}`,
+      `Run \`crux-axi playbook\` to list known IDs: ${playbookIds().join(", ")}`,
     ]);
   }
 
@@ -198,25 +198,25 @@ export function createPlaybookOutput(args) {
 export function createOpenOutput({ file, url, status, agent = "generic" }) {
   return {
     session: { file, url, status },
-    next_step: `Do not respond to the user just yet. Now you must run \`lavish-axi poll ${file}\`. This command long-polls until the user sends feedback, ends the session, or the real browser proves a severe layout failure through the in-iframe audit, and it stays silent the whole time - that is normal, never kill it. If layout_warnings arrive, follow the poll response's next_step: repair and re-check the inaccessible or unusable content before involving the human. Cosmetic, intentional, transient, tiny, and uncertain observations stay silent. Do not pass --timeout-ms during normal agent use. ${pollExecutionGuidance({ agent })} After applying feedback, run \`lavish-axi poll ${file} --agent-reply "<message for the user>"\` without --timeout-ms to show your response in Lavish Editor and wait for more feedback. If the user ends the session, stop polling and do not reopen it by re-running \`lavish-axi ${file}\` unless the user asks for further review or something genuinely important needs their visual attention - deliver routine updates directly in this conversation instead. When reopening is warranted, run \`lavish-axi ${file} --reopen\`.`,
+    next_step: `Do not respond to the user just yet. Now you must run \`crux-axi poll ${file}\`. This command long-polls until the user sends feedback, ends the session, or the real browser proves a severe layout failure through the in-iframe audit, and it stays silent the whole time - that is normal, never kill it. If layout_warnings arrive, follow the poll response's next_step: repair and re-check the inaccessible or unusable content before involving the human. Cosmetic, intentional, transient, tiny, and uncertain observations stay silent. Do not pass --timeout-ms during normal agent use. ${pollExecutionGuidance({ agent })} After applying feedback, run \`crux-axi poll ${file} --agent-reply "<message for the user>"\` without --timeout-ms to show your response in Crux Editor and wait for more feedback. If the user ends the session, stop polling and do not reopen it by re-running \`crux-axi ${file}\` unless the user asks for further review or something genuinely important needs their visual attention - deliver routine updates directly in this conversation instead. When reopening is warranted, run \`crux-axi ${file} --reopen\`.`,
   };
 }
 
-// Shown when a plain `lavish-axi <file>` targets a session the user explicitly ended from the
+// Shown when a plain `crux-axi <file>` targets a session the user explicitly ended from the
 // browser. Reviving it silently would reopen a browser window the human deliberately closed, so
 // this refuses and requires the explicit --reopen opt-in instead of erroring - the session
 // staying closed is the correct, idempotent outcome unless the agent has a real reason to reopen.
 export function createUserEndedOpenOutput({ file, url }) {
   return {
     session: { file, url, status: "user-ended" },
-    next_step: `The user explicitly ended this Lavish Editor session from the browser, so \`lavish-axi ${file}\` did not reopen it. Do not reopen unless the user asks for further review or something genuinely important needs their visual attention - deliver routine updates directly in this conversation instead. When reopening is warranted, run \`lavish-axi ${file} --reopen\`.`,
+    next_step: `The user explicitly ended this Crux Editor session from the browser, so \`crux-axi ${file}\` did not reopen it. Do not reopen unless the user asks for further review or something genuinely important needs their visual attention - deliver routine updates directly in this conversation instead. When reopening is warranted, run \`crux-axi ${file} --reopen\`.`,
   };
 }
 
 async function openCommand(args) {
   const file = firstPositionalArg(args);
   if (!file) {
-    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `lavish-axi <html-file>`"]);
+    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `crux-axi <html-file>`"]);
   }
   await assertHtmlFile(file);
   const absolute = await canonicalFile(file);
@@ -244,13 +244,13 @@ async function openCommand(args) {
 }
 
 export function shouldOpenBrowser(args, env) {
-  return !args.includes("--no-open") && env.LAVISH_AXI_NO_OPEN !== "1";
+  return !args.includes("--no-open") && env.CRUX_AXI_NO_OPEN !== "1";
 }
 
 async function pollCommand(args) {
   const file = firstPositionalArg(args, ["--agent-reply", "--timeout-ms"]);
   if (!file) {
-    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `lavish-axi poll <html-file>`"]);
+    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `crux-axi poll <html-file>`"]);
   }
   const absolute = await canonicalFile(file);
   const baseUrl = await ensureServer();
@@ -300,20 +300,20 @@ async function pollCommand(args) {
 
 export function pollWaitBannerText(file) {
   return (
-    `[lavish-axi] Long-polling for user feedback or layout_warnings on ${file}. This stays silent until the user sends feedback, ends the session, or the browser reports fresh layout_warnings - leave it running. ` +
-    `If it gets killed or times out, re-run \`lavish-axi poll ${file}\` - queued feedback is never lost.`
+    `[crux-axi] Long-polling for user feedback or layout_warnings on ${file}. This stays silent until the user sends feedback, ends the session, or the browser reports fresh layout_warnings - leave it running. ` +
+    `If it gets killed or times out, re-run \`crux-axi poll ${file}\` - queued feedback is never lost.`
   );
 }
 
 export function pollWaitTickText(elapsedMs) {
   const minutes = Math.round(elapsedMs / 60_000);
-  return `[lavish-axi] Still waiting for user feedback (${minutes}m). Also waiting for fresh layout_warnings. Leave this running until the user acts or the browser reports fresh layout_warnings.`;
+  return `[crux-axi] Still waiting for user feedback (${minutes}m). Also waiting for fresh layout_warnings. Leave this running until the user acts or the browser reports fresh layout_warnings.`;
 }
 
 export function pollInterruptedText(file) {
   return (
-    `[lavish-axi] Poll interrupted before user feedback arrived. The user may still be reviewing - ` +
-    `re-run \`lavish-axi poll ${file}\` to keep waiting; queued feedback is never lost.`
+    `[crux-axi] Poll interrupted before user feedback arrived. The user may still be reviewing - ` +
+    `re-run \`crux-axi poll ${file}\` to keep waiting; queued feedback is never lost.`
   );
 }
 
@@ -347,9 +347,7 @@ export function startPollWaitReporter({
  */
 export function createPollOutput({ file, response, agent = "generic" }) {
   if (response.status === "missing") {
-    throw new AxiError("No active Lavish Editor session for this file", "NOT_FOUND", [
-      `Run \`lavish-axi ${file}\` first`,
-    ]);
+    throw new AxiError("No active Crux Editor session for this file", "NOT_FOUND", [`Run \`crux-axi ${file}\` first`]);
   }
   if (response.status === "feedback") {
     const layoutWarnings = Array.isArray(response.layout_warnings)
@@ -379,34 +377,34 @@ export function createPollOutput({ file, response, agent = "generic" }) {
   }
   return {
     session: { file, status: response.status || "waiting" },
-    next_step: `No user feedback arrived before the optional timeout. Run \`lavish-axi poll ${file}\` without --timeout-ms to wait indefinitely - queued feedback is never lost, so re-running the poll is always safe.`,
+    next_step: `No user feedback arrived before the optional timeout. Run \`crux-axi poll ${file}\` without --timeout-ms to wait indefinitely - queued feedback is never lost, so re-running the poll is always safe.`,
   };
 }
 
 function createFeedbackNextStep(file, layoutWarnings, sessionEnded, endedBy, prompts = [], agent = "generic") {
   const count = layoutWarnings.length;
   const whiteboardNote = prompts.some((prompt) => prompt && prompt.tag === "whiteboard")
-    ? `This feedback includes whiteboard edits (tag "whiteboard"): read the edit summary in the prompt text first, and only when it is not enough, open the target's scenePath (.excalidraw scene JSON) or previewPath (PNG) local files for detail. The artifact's Mermaid source stays authoritative - apply the edits by updating the Mermaid text in ${file} (Lavish live-reloads it); never try to write the .excalidraw scene back. `
+    ? `This feedback includes whiteboard edits (tag "whiteboard"): read the edit summary in the prompt text first, and only when it is not enough, open the target's scenePath (.excalidraw scene JSON) or previewPath (PNG) local files for detail. The artifact's Mermaid source stays authoritative - apply the edits by updating the Mermaid text in ${file} (Crux live-reloads it); never try to write the .excalidraw scene back. `
     : "";
   if (sessionEnded) {
     const layoutNote =
       count > 0
         ? endedBy === "user"
-          ? `${count} proven severe layout failure${count === 1 ? "" : "s"} arrived alongside this final feedback. Repair the inaccessible or unusable content in ${file}, then open it directly at the affected viewport and confirm the content or control is visible and usable without reopening this ended Lavish session. `
-          : `${count} proven severe layout failure${count === 1 ? "" : "s"} arrived alongside this final feedback. Repair the inaccessible or unusable content in ${file}, then run \`lavish-axi ${file}\` to open a fresh session and re-check the real-browser audit. `
+          ? `${count} proven severe layout failure${count === 1 ? "" : "s"} arrived alongside this final feedback. Repair the inaccessible or unusable content in ${file}, then open it directly at the affected viewport and confirm the content or control is visible and usable without reopening this ended Crux session. `
+          : `${count} proven severe layout failure${count === 1 ? "" : "s"} arrived alongside this final feedback. Repair the inaccessible or unusable content in ${file}, then run \`crux-axi ${file}\` to open a fresh session and re-check the real-browser audit. `
         : "";
     if (endedBy === "user") {
       const reopenNote =
         count > 0
           ? ""
-          : ` Only run \`lavish-axi ${file} --reopen\` if the user explicitly asks for further review or something genuinely important needs their visual attention.`;
+          : ` Only run \`crux-axi ${file} --reopen\` if the user explicitly asks for further review or something genuinely important needs their visual attention.`;
       return `${layoutNote}${whiteboardNote}This was the last feedback before the user ended the session. Stop polling ${file} and do not reopen it - deliver any remaining updates directly in this conversation instead.${reopenNote}`;
     }
-    return `${layoutNote}${whiteboardNote}This was the last feedback before the Lavish Editor session ended. Stop polling ${file}. Deliver any remaining updates directly in this conversation, or run \`lavish-axi ${file}\` to open a fresh session if the user needs further visual review.`;
+    return `${layoutNote}${whiteboardNote}This was the last feedback before the Crux Editor session ended. Stop polling ${file}. Deliver any remaining updates directly in this conversation, or run \`crux-axi ${file}\` to open a fresh session if the user needs further visual review.`;
   }
   const layoutPrefix =
     count > 0 ? layoutWarningsPrefix(file, layoutWarnings) : `Apply the requested changes to ${file}. `;
-  return `${layoutPrefix}${whiteboardNote}Do not respond to the user just yet. Now you must run \`lavish-axi poll ${file} --agent-reply "<message for the user>"\` without --timeout-ms unless the user ended the session. The poll waits silently until the user sends more feedback, ends the session, or reports fresh layout_warnings - never kill it. ${pollExecutionGuidance({ agent })}`;
+  return `${layoutPrefix}${whiteboardNote}Do not respond to the user just yet. Now you must run \`crux-axi poll ${file} --agent-reply "<message for the user>"\` without --timeout-ms unless the user ended the session. The poll waits silently until the user sends more feedback, ends the session, or reports fresh layout_warnings - never kill it. ${pollExecutionGuidance({ agent })}`;
 }
 
 // Layout findings reach this path only after the browser has direct, stable evidence that
@@ -415,20 +413,20 @@ function createFeedbackNextStep(file, layoutWarnings, sessionEnded, endedBy, pro
 function layoutWarningsPrefix(file, layoutWarnings) {
   const count = layoutWarnings.length;
   const plural = count === 1 ? "" : "s";
-  return `${count} proven severe layout failure${plural} detected - repair the inaccessible or unusable content in ${file}, then re-check in the browser before involving the human. Lavish live-reloads the artifact automatically after you save, so you do not need to re-run \`lavish-axi ${file}\` for this. `;
+  return `${count} proven severe layout failure${plural} detected - repair the inaccessible or unusable content in ${file}, then re-check in the browser before involving the human. Crux live-reloads the artifact automatically after you save, so you do not need to re-run \`crux-axi ${file}\` for this. `;
 }
 
 function createEndedNextStep(file, endedBy) {
   if (endedBy === "user") {
-    return `The user ended this Lavish Editor session. Stop polling ${file} - do not run \`lavish-axi ${file}\` to reopen it. Deliver any remaining updates directly in this conversation instead. Only reopen with \`lavish-axi ${file} --reopen\` if the user explicitly asks for further review or something genuinely important needs their visual attention.`;
+    return `The user ended this Crux Editor session. Stop polling ${file} - do not run \`crux-axi ${file}\` to reopen it. Deliver any remaining updates directly in this conversation instead. Only reopen with \`crux-axi ${file} --reopen\` if the user explicitly asks for further review or something genuinely important needs their visual attention.`;
   }
-  return `This Lavish Editor session for ${file} has ended. Stop polling. Deliver any remaining updates directly in this conversation, or run \`lavish-axi ${file}\` to open a fresh session if the user needs further visual review.`;
+  return `This Crux Editor session for ${file} has ended. Stop polling. Deliver any remaining updates directly in this conversation, or run \`crux-axi ${file}\` to open a fresh session if the user needs further visual review.`;
 }
 
 async function endCommand(args) {
   const file = firstPositionalArg(args);
   if (!file) {
-    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `lavish-axi end <html-file>`"]);
+    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `crux-axi end <html-file>`"]);
   }
   const absolute = await canonicalFile(file);
   const baseUrl = await ensureServer();
@@ -438,12 +436,12 @@ async function endCommand(args) {
 
 // Produce a portable copy of an artifact: one HTML file with its LOCAL assets (relative-path
 // stylesheets, scripts, images, fonts) inlined as data URIs. Remote CDN/font references are left
-// as-is for the browser to load, so the export needs network to render those. Lavish makes no
+// as-is for the browser to load, so the export needs network to render those. Crux makes no
 // outbound requests - export is a pure local file transform, server-independent.
 async function exportCommand(args) {
   const file = firstPositionalArg(args, ["--out"]);
   if (!file) {
-    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `lavish-axi export <html-file>`"]);
+    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `crux-axi export <html-file>`"]);
   }
   await assertHtmlFile(file);
   const absolute = await canonicalFile(file);
@@ -478,9 +476,9 @@ export function createExportOutput({ source, output, html, warnings }) {
     result.next_step =
       "Some LOCAL assets could not be inlined and were left as references (see unresolved_local_assets); they will break once the file is moved. Remote CDN/font references are intentionally left as links and render where there is network access.";
   } else if (notices.length) {
-    result.next_step = `Wrote ${output} with export notices (see notices). Open it directly or host it anywhere - it needs no Lavish server. Local assets are inlined; remote CDN/font references are left as links, so it needs network to render those.`;
+    result.next_step = `Wrote ${output} with export notices (see notices). Open it directly or host it anywhere - it needs no Crux server. Local assets are inlined; remote CDN/font references are left as links, so it needs network to render those.`;
   } else {
-    result.next_step = `Wrote ${output}. Open it directly or host it anywhere - it needs no Lavish server. Local assets are inlined; remote CDN/font references are left as links, so it needs network to render those.`;
+    result.next_step = `Wrote ${output}. Open it directly or host it anywhere - it needs no Crux server. Local assets are inlined; remote CDN/font references are left as links, so it needs network to render those.`;
   }
   return result;
 }
@@ -491,13 +489,13 @@ function assetWarningSummaries(warnings) {
 
 // Publish the artifact as a visitable page on third-party ht-ml.app. Builds the same local-inlined
 // HTML as `export` (remote refs left as links), then POSTs it to ht-ml.app's `/v1/sites` API,
-// sending the artifact to ht-ml.app's servers. The service is not part of Lavish, needs no
+// sending the artifact to ht-ml.app's servers. The service is not part of Crux, needs no
 // account or API key, and returns the share URL plus the secret update_key for
 // managing the page later. Server-independent.
 async function shareCommand(args) {
   const file = firstPositionalArg(args, ["--password", "--token"]);
   if (!file) {
-    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `lavish-axi share <html-file>`"]);
+    throw new AxiError("HTML file path is required", "VALIDATION_ERROR", ["Run `crux-axi share <html-file>`"]);
   }
   await assertHtmlFile(file);
   const absolute = await canonicalFile(file);
@@ -538,7 +536,7 @@ export function createShareOutput({ source, site, warnings, passwordProtected = 
   if (notices.length) result.notices = assetWarningSummaries(notices);
   const noticeNote = notices.length ? " Export notices are available in notices." : "";
   const hostNote =
-    "ht-ml.app (https://ht-ml.app), a third-party host not part of Lavish, hosts the page, so it needs no Lavish server.";
+    "ht-ml.app (https://ht-ml.app), a third-party host not part of Crux, hosts the page, so it needs no Crux server.";
   if (unresolved.length) {
     result.next_step =
       `Published ${isPasswordProtected ? "a PASSWORD-PROTECTED page at " : ""}${site.url}, but some LOCAL assets could not be inlined and were left as references (see unresolved_local_assets); inspect the hosted page and fix missing local assets before sharing it.${passwordNote}${noticeNote} ` +
@@ -561,7 +559,7 @@ export function createShareOutput({ source, site, warnings, passwordProtected = 
   return result;
 }
 
-// Explicitly shut down the running Lavish Editor server. Unlike `end` (which closes a single
+// Explicitly shut down the running Crux Editor server. Unlike `end` (which closes a single
 // session), this stops the background process so it stops dangling between sessions.
 export async function stopCommand(args) {
   const port = Number(flagValue(args, "--port") || defaultPort());
@@ -578,15 +576,15 @@ export async function shutdownServerOnPort(
     requestShutdown: shutdownRequester = requestShutdown,
     waitForPortFree: portFreeWaiter = waitForPortFree,
     killProcessOnPort: portKiller = killProcessOnPort,
-    processMatchesLavish = processOnPortMatchesLavish,
+    processMatchesCrux = processOnPortMatchesCrux,
   } = {},
 ) {
   const health = await healthFetcher(baseUrl);
   if (!health) {
     return { server: { status: "not-running", port } };
   }
-  if (!(await canControlServerOnPort(port, health, processMatchesLavish))) {
-    return { server: { status: "not-lavish", port } };
+  if (!(await canControlServerOnPort(port, health, processMatchesCrux))) {
+    return { server: { status: "not-crux", port } };
   }
   await shutdownRequester(baseUrl);
   let freed = await portFreeWaiter(baseUrl, 3000);
@@ -607,14 +605,14 @@ async function designCommand() {
 
 async function setupCommand(args) {
   if (args.length !== 1 || args[0] !== "hooks") {
-    throw new AxiError("Unknown setup action", "VALIDATION_ERROR", ["Run `lavish-axi setup hooks`"]);
+    throw new AxiError("Unknown setup action", "VALIDATION_ERROR", ["Run `crux-axi setup hooks`"]);
   }
 
   const errors = [];
   installSessionStartHooks({
-    marker: "lavish-axi",
-    binaryNames: ["lavish-axi"],
-    distEntrypoints: ["dist/cli.mjs", "bin/lavish-axi.js"],
+    marker: "crux-axi",
+    binaryNames: ["crux-axi"],
+    distEntrypoints: ["dist/cli.mjs", "bin/crux-axi.js"],
     homeDir: resolveHookHomeDir(),
     onError: (message) => errors.push(message),
   });
@@ -624,12 +622,12 @@ async function setupCommand(args) {
   });
 
   if (errors.length > 0) {
-    throw new AxiError("Failed to install lavish-axi agent hooks", "SERVER_ERROR", errors);
+    throw new AxiError("Failed to install crux-axi agent hooks", "SERVER_ERROR", errors);
   }
 
   return {
     hooks: { status: "installed", integrations: "Claude Code, Codex, OpenCode, GitHub Copilot CLI" },
-    help: ["Restart your agent session to receive lavish-axi ambient context"],
+    help: ["Restart your agent session to receive crux-axi ambient context"],
   };
 }
 
@@ -641,7 +639,7 @@ export function resolveCopilotHookDir(env = process.env, homeDir = resolveHookHo
   return path.join(env.COPILOT_HOME || path.join(homeDir, ".copilot"), "hooks");
 }
 
-export function createCopilotCliAmbientContextScript(command = "lavish-axi") {
+export function createCopilotCliAmbientContextScript(command = "crux-axi") {
   return [
     'const { spawnSync } = require("node:child_process");',
     `const command = ${JSON.stringify(command)};`,
@@ -649,12 +647,12 @@ export function createCopilotCliAmbientContextScript(command = "lavish-axi") {
     'const detail = result.error ? result.error.message : (result.stderr || result.stdout || "exit " + (result.status ?? "unknown"));',
     "const text = String(result.status === 0 ? result.stdout : detail).trim();",
     'if (!text) { console.log("{}"); process.exit(0); }',
-    'const prefix = result.status === 0 ? "## AXI ambient context: lavish-axi\\n" : "## AXI ambient context: lavish-axi\\nerror: lavish-axi ambient context failed: ";',
+    'const prefix = result.status === 0 ? "## AXI ambient context: crux-axi\\n" : "## AXI ambient context: crux-axi\\nerror: crux-axi ambient context failed: ";',
     "console.log(JSON.stringify({ additionalContext: prefix + text }));",
   ].join(" ");
 }
 
-export function createCopilotCliSessionStartHook(command = "lavish-axi", timeoutSec = 10) {
+export function createCopilotCliSessionStartHook(command = "crux-axi", timeoutSec = 10) {
   const script = createCopilotCliAmbientContextScript(command);
   return {
     type: "command",
@@ -691,11 +689,11 @@ export function computeCopilotCliHookUpdate(settings, hook = createCopilotCliSes
 
 export function installCopilotCliSessionStartHook({
   hookDir = resolveCopilotHookDir(),
-  command = "lavish-axi",
+  command = "crux-axi",
   timeoutSec = 10,
   onError = undefined,
 } = {}) {
-  const target = path.join(hookDir, "lavish-axi.json");
+  const target = path.join(hookDir, "crux-axi.json");
   try {
     mkdirSync(path.dirname(target), { recursive: true });
     const current = existsSync(target) ? JSON.parse(readFileSync(target, "utf8")) : {};
@@ -718,7 +716,7 @@ function isManagedCopilotCliHook(entry) {
     typeof entry === "object" &&
     (typeof entry.bash === "string" || typeof entry.powershell === "string" || typeof entry.command === "string") &&
     [entry.bash, entry.powershell, entry.command].some(
-      (value) => typeof value === "string" && value.includes("lavish-axi"),
+      (value) => typeof value === "string" && value.includes("crux-axi"),
     )
   );
 }
@@ -737,7 +735,7 @@ function deepEqual(a, b) {
 
 async function serverCommand(args) {
   const port = Number(flagValue(args, "--port") || defaultPort());
-  const debug = args.includes("--verbose") || process.env.LAVISH_AXI_DEBUG === "1";
+  const debug = args.includes("--verbose") || process.env.CRUX_AXI_DEBUG === "1";
   const server = await serve({ port, stateFile: stateFile(), version: VERSION, debug });
   await server.done;
   return "";
@@ -750,13 +748,13 @@ async function visibleSessions() {
 
 async function assertHtmlFile(file) {
   if (!isHtmlPath(file)) {
-    throw new AxiError("Lavish Editor expects an HTML file", "VALIDATION_ERROR", ["Run `lavish-axi <html-file>`"]);
+    throw new AxiError("Crux Editor expects an HTML file", "VALIDATION_ERROR", ["Run `crux-axi <html-file>`"]);
   }
   try {
     await access(file);
   } catch {
     throw new AxiError(`File not found: ${file}`, "NOT_FOUND", [
-      "Create the HTML artifact first, then run `lavish-axi <html-file>`",
+      "Create the HTML artifact first, then run `crux-axi <html-file>`",
     ]);
   }
 }
@@ -773,9 +771,9 @@ async function ensureServer({ forceRestart = false } = {}) {
     return baseUrl;
   }
   if (existing) {
-    if (!(await canControlServerOnPort(port, existing, processOnPortMatchesLavish))) {
-      throw new AxiError(`Port ${port} is occupied by a non-Lavish server`, "SERVER_ERROR", [
-        `Stop the process using port ${port}, or set LAVISH_AXI_PORT to another port`,
+    if (!(await canControlServerOnPort(port, existing, processOnPortMatchesCrux))) {
+      throw new AxiError(`Port ${port} is occupied by a non-Crux server`, "SERVER_ERROR", [
+        `Stop the process using port ${port}, or set CRUX_AXI_PORT to another port`,
       ]);
     }
     // Stale server from an older release is squatting on the port. Ask it to shut down
@@ -801,8 +799,8 @@ async function ensureServer({ forceRestart = false } = {}) {
     }
     await delay(100);
   }
-  throw new AxiError("Lavish Editor server did not start", "SERVER_ERROR", [
-    `Run \`lavish-axi server --port ${port}\` to inspect server startup`,
+  throw new AxiError("Crux Editor server did not start", "SERVER_ERROR", [
+    `Run \`crux-axi server --port ${port}\` to inspect server startup`,
   ]);
 }
 
@@ -812,7 +810,7 @@ async function ensureServer({ forceRestart = false } = {}) {
 // to step aside.
 export function shouldRestartServer(currentVersion, healthBody, forceRestart = false) {
   if (!healthBody || typeof healthBody !== "object") return false;
-  if (forceRestart && healthBody.app === "lavish-axi") return true;
+  if (forceRestart && healthBody.app === "crux-axi") return true;
   if (typeof healthBody.version !== "string" || healthBody.version === "") return true;
   return healthBody.version !== currentVersion;
 }
@@ -829,15 +827,15 @@ function localSourceServerExists() {
 export function shouldKillProcessOnPort(currentVersion, healthBody) {
   if (!healthBody || typeof healthBody !== "object") return false;
   if (typeof healthBody.version !== "string" || healthBody.version === "") return true;
-  if (healthBody.app !== "lavish-axi") return false;
+  if (healthBody.app !== "crux-axi") return false;
   return healthBody.version !== currentVersion;
 }
 
-async function canControlServerOnPort(port, healthBody, processMatchesLavish) {
+async function canControlServerOnPort(port, healthBody, processMatchesCrux) {
   if (!healthBody || typeof healthBody !== "object") return false;
-  if (healthBody.app === "lavish-axi") return true;
+  if (healthBody.app === "crux-axi") return true;
   if (typeof healthBody.version === "string" && healthBody.version !== "") return false;
-  return processMatchesLavish(port);
+  return processMatchesCrux(port);
 }
 
 async function fetchHealth(baseUrl) {
@@ -869,7 +867,7 @@ async function waitForPortFree(baseUrl, timeoutMs) {
 
 // Last-resort fallback for the bootstrap upgrade case: a pre-handshake server is squatting
 // on the port and doesn't expose /shutdown, so we resolve its PID via lsof and SIGTERM it.
-// macOS/Linux only - Windows users would need to kill manually, but lavish-axi isn't
+// macOS/Linux only - Windows users would need to kill manually, but crux-axi isn't
 // shipped for Windows today.
 function killProcessOnPort(port) {
   try {
@@ -890,7 +888,7 @@ function killProcessOnPort(port) {
   }
 }
 
-function processOnPortMatchesLavish(port) {
+function processOnPortMatchesCrux(port) {
   try {
     const pids = spawnSync("lsof", ["-t", `-iTCP:${port}`, "-sTCP:LISTEN"], { encoding: "utf8" });
     if (pids.status !== 0) return false;
@@ -898,7 +896,7 @@ function processOnPortMatchesLavish(port) {
       const pid = Number(line.trim());
       if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) continue;
       const command = spawnSync("ps", ["-p", String(pid), "-o", "command="], { encoding: "utf8" });
-      if (command.status === 0 && /lavish-axi/.test(command.stdout)) {
+      if (command.status === 0 && /crux-axi/.test(command.stdout)) {
         return true;
       }
     }
@@ -926,11 +924,11 @@ async function startServer(port) {
 }
 
 // The detached server child must point at a node-executable entry that actually invokes
-// run(). In source layout that's `../bin/lavish-axi.js` (which calls run on import). In the
+// run(). In source layout that's `../bin/crux-axi.js` (which calls run on import). In the
 // published bundle, only `dist/cli.mjs` ships and it self-invokes via the bundled bin
 // wrapper. Pick whichever exists.
 export function resolveServerEntry() {
-  const binEntry = fileURLToPath(new URL("../bin/lavish-axi.js", import.meta.url));
+  const binEntry = fileURLToPath(new URL("../bin/crux-axi.js", import.meta.url));
   if (existsSync(binEntry)) return binEntry;
   return fileURLToPath(import.meta.url);
 }
@@ -946,7 +944,7 @@ export function createServerSpawnOptions(logFd = null) {
   return {
     detached: true,
     stdio,
-    env: { ...process.env, LAVISH_AXI_NO_OPEN: "1" },
+    env: { ...process.env, CRUX_AXI_NO_OPEN: "1" },
   };
 }
 
@@ -965,7 +963,7 @@ export async function fetchJson(url, { retries = 0, retryDelayMs = 250 } = {}) {
 
   if (!response) throw serverConnectionError();
   if (!response.ok) {
-    throw new AxiError(`Lavish Editor request failed: ${response.status}`, "SERVER_ERROR");
+    throw new AxiError(`Crux Editor request failed: ${response.status}`, "SERVER_ERROR");
   }
   try {
     return await response.json();
@@ -986,22 +984,22 @@ async function postJson(url, body) {
     throw serverConnectionError();
   }
   if (!response.ok) {
-    throw new AxiError(`Lavish Editor request failed: ${response.status}`, "SERVER_ERROR");
+    throw new AxiError(`Crux Editor request failed: ${response.status}`, "SERVER_ERROR");
   }
   return response.json();
 }
 
 function serverConnectionError() {
-  return new AxiError("Lavish Editor server connection failed", "SERVER_ERROR", [
-    "Run `lavish-axi server --verbose` or inspect `~/.lavish-axi/server.log` (`LAVISH_AXI_STATE_DIR/server.log` when set) for server startup or crash diagnostics",
-    "Re-run the last `lavish-axi poll <html-file>` command after the server is healthy",
+  return new AxiError("Crux Editor server connection failed", "SERVER_ERROR", [
+    "Run `crux-axi server --verbose` or inspect `~/.crux-axi/server.log` (`CRUX_AXI_STATE_DIR/server.log` when set) for server startup or crash diagnostics",
+    "Re-run the last `crux-axi poll <html-file>` command after the server is healthy",
   ]);
 }
 
 function pollResponseInterruptedError() {
-  return new AxiError("Lavish Editor poll response was interrupted", "SERVER_ERROR", [
-    "Run `lavish-axi server --verbose` or inspect `~/.lavish-axi/server.log` (`LAVISH_AXI_STATE_DIR/server.log` when set) for server startup or crash diagnostics",
-    "Re-run the last `lavish-axi poll <html-file>` command after the server is healthy",
+  return new AxiError("Crux Editor poll response was interrupted", "SERVER_ERROR", [
+    "Run `crux-axi server --verbose` or inspect `~/.crux-axi/server.log` (`CRUX_AXI_STATE_DIR/server.log` when set) for server startup or crash diagnostics",
+    "Re-run the last `crux-axi poll <html-file>` command after the server is healthy",
   ]);
 }
 
@@ -1057,21 +1055,21 @@ export function getCommandHelp(command, { agent = "generic" } = {}) {
 }
 
 function createTopLevelHelp({ agent = "generic" } = {}) {
-  return `lavish-axi - Lavish Editor AXI\n\nUsage:\n  lavish-axi\n  lavish-axi <html-file> [--no-open] [--no-gate] [--reopen]\n  lavish-axi poll <html-file> [--agent-reply "..."]\n  lavish-axi end <html-file>\n  lavish-axi export <html-file> [--out <path>]\n  lavish-axi share <html-file> [--password <pw>] [--token <t>]\n  lavish-axi stop\n  lavish-axi playbook [playbook_id]\n  lavish-axi design\n  lavish-axi setup hooks\n\n${DESIGN_SYSTEM_HINT}\n\nNote: poll long-polls indefinitely by default until the user sends feedback, ends the session, or the browser proves a severe layout failure, staying silent while it waits - never kill it. Repair and re-check every returned layout failure before involving the human; cosmetic and uncertain observations are never returned. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. ${pollExecutionGuidance({ agent })} ${POLL_SEND_AND_END_RULE}\n\n`;
+  return `crux-axi - Crux Editor AXI\n\nUsage:\n  crux-axi\n  crux-axi <html-file> [--no-open] [--no-gate] [--reopen]\n  crux-axi poll <html-file> [--agent-reply "..."]\n  crux-axi end <html-file>\n  crux-axi export <html-file> [--out <path>]\n  crux-axi share <html-file> [--password <pw>] [--token <t>]\n  crux-axi stop\n  crux-axi playbook [playbook_id]\n  crux-axi design\n  crux-axi setup hooks\n\n${DESIGN_SYSTEM_HINT}\n\nNote: poll long-polls indefinitely by default until the user sends feedback, ends the session, or the browser proves a severe layout failure, staying silent while it waits - never kill it. Repair and re-check every returned layout failure before involving the human; cosmetic and uncertain observations are never returned. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. ${pollExecutionGuidance({ agent })} ${POLL_SEND_AND_END_RULE}\n\n`;
 }
 
 function createCommandHelp({ agent = "generic" } = {}) {
   return {
-    open: `Usage: lavish-axi <html-file> [--no-open] [--no-gate] [--reopen]\n\nOpen or resume a Lavish Editor review session for an HTML artifact. Use --no-open when you need to ensure the server/session exists without opening another browser window. Use --no-gate to skip the open-time layout curtain for this browser open. If the user explicitly ended the session from the browser, this refuses to reopen it and returns guidance instead - pass --reopen to force it open when the user asks for further review or something important needs their visual attention. Sessions ended by the agent (\`lavish-axi end\`) reopen normally without the flag.\n`,
-    poll: `Usage: lavish-axi poll <html-file> [--agent-reply "..."]\n\nThis command long-polls indefinitely for queued user prompts and browser-proven severe layout failures, then returns them to the agent as layout_warnings. It stays silent while it waits - that is normal, never kill it. Repair and re-check every returned layout failure before involving the human; cosmetic and uncertain observations are never returned. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. ${pollExecutionGuidance({ agent })} Use --agent-reply after applying prior feedback to display your response in Lavish Editor before waiting again. ${POLL_SEND_AND_END_RULE}\n`,
-    end: `Usage: lavish-axi end <html-file>\n\nEnd a Lavish Editor session as the agent. A session ended this way still reopens normally on the next \`lavish-axi <html-file>\`, unlike a user ending it from the browser, which requires --reopen.\n`,
-    export: `Usage: lavish-axi export <html-file> [--out <path>]\n\nWrite a portable copy of an artifact: one HTML file with its LOCAL assets inlined (relative-path stylesheets, scripts, images, and fonts become inline <style>/<script> blocks and data URIs). Remote CDN/font references (https URLs) are left as links for the browser to load, so the file needs network to render those. Lavish makes no outbound requests - it only reads local files, confined to the artifact's directory. Defaults to writing <name>.export.html next to the source; pass --out to choose a path. The Lavish annotation SDK is never included in an export.\n`,
-    share: `Usage: lavish-axi share <html-file> [--password <pw>] [--token <t>]\n\nPublish the artifact on ht-ml.app (https://ht-ml.app), a third-party hosting service not part of Lavish, and print a visitable URL. Shares are PUBLIC by default: anyone with the link can open the page, and it may be indexed or scraped. Pass --password to publish a PRIVATE password-protected page; viewers must supply the password to view. Builds the same local-inlined HTML as 'export' (local assets inlined; remote CDN/font URLs left as links and are not blocked by CSP on ht-ml.app, but still load over the viewer's network), then POSTs it to ht-ml.app's /v1 API. Creating a site needs no account or API key. The response includes the url plus a secret update_key (shown once) for updating or deleting the page later. Set LAVISH_AXI_HTML_APP_TOKEN (or pass --token) to attach an optional bearer token; it is never required. The annotation SDK is never included.\n`,
-    stop: `Usage: lavish-axi stop [--port <port>]\n\nShut down the background Lavish Editor server. The server also stops itself when no browser or poll has been connected for a while (LAVISH_AXI_IDLE_TIMEOUT_MS, default 30m) and immediately when the last session ends with nothing connected.\n`,
-    playbook: `Usage: lavish-axi playbook [playbook_id]\n\nList focused artifact guidance playbooks, or show one playbook by ID. Known IDs: diagram, table, comparison, plan, code, input, slides.\n\n${PLAYBOOK_ROUTER_HELP}\n\nExamples:\n  lavish-axi playbook\n  lavish-axi playbook diagram\n  lavish-axi playbook input\n`,
-    design: `Usage: lavish-axi design\n\nShow a copy-pasteable CDN snippet for Tailwind CSS browser runtime v4 + DaisyUI v5 + themes, Mermaid diagram tooling, a content-to-playbook router, an optional layout safety CSS snippet, plus technical reference for DaisyUI components. ${PLAYBOOK_ROUTER_HELP} Lavish artifacts stay portable HTML. This CDN snippet is the design fallback, not the default: inspect the subject project before falling back, and paste the layout safety CSS only when useful for dense nested grid/flex layouts, badges, wide fonts, or local media. ${DESIGN_PRIORITY_RULE}\n`,
-    setup: `Usage: lavish-axi setup hooks\n\nInstall or repair agent SessionStart hooks for lavish-axi ambient context in Claude Code, Codex, OpenCode, and GitHub Copilot CLI. Restart your agent session afterward to receive the context.\n`,
-    server: `Usage: lavish-axi server [--port 4387] [--verbose]\n\nRun the local Lavish Editor server. Pass --verbose (or set LAVISH_AXI_DEBUG=1) to log session and watcher events to stderr. Detached server output is appended to ~/.lavish-axi/server.log, or LAVISH_AXI_STATE_DIR/server.log when set, for startup and crash diagnostics.\n\nLAVISH_AXI_HOST sets the bind address (default 127.0.0.1; a wildcard 0.0.0.0 or :: binds every interface). Binding beyond loopback exposes an unauthenticated server that can read and serve arbitrary local files to anything that can reach it, so only do so on a trusted network. LAVISH_AXI_LINK_HOST sets the hostname written into generated session links (default: the bind address, or loopback when bound to a wildcard). See README's Allowed hosts section for Host allowlisting and LAVISH_AXI_ALLOWED_HOSTS. LAVISH_AXI_NO_OPEN=1 (or --no-open) suppresses the local browser launch.\n`,
+    open: `Usage: crux-axi <html-file> [--no-open] [--no-gate] [--reopen]\n\nOpen or resume a Crux Editor review session for an HTML artifact. Use --no-open when you need to ensure the server/session exists without opening another browser window. Use --no-gate to skip the open-time layout curtain for this browser open. If the user explicitly ended the session from the browser, this refuses to reopen it and returns guidance instead - pass --reopen to force it open when the user asks for further review or something important needs their visual attention. Sessions ended by the agent (\`crux-axi end\`) reopen normally without the flag.\n`,
+    poll: `Usage: crux-axi poll <html-file> [--agent-reply "..."]\n\nThis command long-polls indefinitely for queued user prompts and browser-proven severe layout failures, then returns them to the agent as layout_warnings. It stays silent while it waits - that is normal, never kill it. Repair and re-check every returned layout failure before involving the human; cosmetic and uncertain observations are never returned. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. ${pollExecutionGuidance({ agent })} Use --agent-reply after applying prior feedback to display your response in Crux Editor before waiting again. ${POLL_SEND_AND_END_RULE}\n`,
+    end: `Usage: crux-axi end <html-file>\n\nEnd a Crux Editor session as the agent. A session ended this way still reopens normally on the next \`crux-axi <html-file>\`, unlike a user ending it from the browser, which requires --reopen.\n`,
+    export: `Usage: crux-axi export <html-file> [--out <path>]\n\nWrite a portable copy of an artifact: one HTML file with its LOCAL assets inlined (relative-path stylesheets, scripts, images, and fonts become inline <style>/<script> blocks and data URIs). Remote CDN/font references (https URLs) are left as links for the browser to load, so the file needs network to render those. Crux makes no outbound requests - it only reads local files, confined to the artifact's directory. Defaults to writing <name>.export.html next to the source; pass --out to choose a path. The Crux annotation SDK is never included in an export.\n`,
+    share: `Usage: crux-axi share <html-file> [--password <pw>] [--token <t>]\n\nPublish the artifact on ht-ml.app (https://ht-ml.app), a third-party hosting service not part of Crux, and print a visitable URL. Shares are PUBLIC by default: anyone with the link can open the page, and it may be indexed or scraped. Pass --password to publish a PRIVATE password-protected page; viewers must supply the password to view. Builds the same local-inlined HTML as 'export' (local assets inlined; remote CDN/font URLs left as links and are not blocked by CSP on ht-ml.app, but still load over the viewer's network), then POSTs it to ht-ml.app's /v1 API. Creating a site needs no account or API key. The response includes the url plus a secret update_key (shown once) for updating or deleting the page later. Set CRUX_AXI_HTML_APP_TOKEN (or pass --token) to attach an optional bearer token; it is never required. The annotation SDK is never included.\n`,
+    stop: `Usage: crux-axi stop [--port <port>]\n\nShut down the background Crux Editor server. The server also stops itself when no browser or poll has been connected for a while (CRUX_AXI_IDLE_TIMEOUT_MS, default 30m) and immediately when the last session ends with nothing connected.\n`,
+    playbook: `Usage: crux-axi playbook [playbook_id]\n\nList focused artifact guidance playbooks, or show one playbook by ID. Known IDs: diagram, table, comparison, plan, code, input, slides.\n\n${PLAYBOOK_ROUTER_HELP}\n\nExamples:\n  crux-axi playbook\n  crux-axi playbook diagram\n  crux-axi playbook input\n`,
+    design: `Usage: crux-axi design\n\nShow a copy-pasteable CDN snippet for Tailwind CSS browser runtime v4 + DaisyUI v5 + themes, Mermaid diagram tooling, a content-to-playbook router, an optional layout safety CSS snippet, plus technical reference for DaisyUI components. ${PLAYBOOK_ROUTER_HELP} Crux artifacts stay portable HTML. This CDN snippet is the design fallback, not the default: inspect the subject project before falling back, and paste the layout safety CSS only when useful for dense nested grid/flex layouts, badges, wide fonts, or local media. ${DESIGN_PRIORITY_RULE}\n`,
+    setup: `Usage: crux-axi setup hooks\n\nInstall or repair agent SessionStart hooks for crux-axi ambient context in Claude Code, Codex, OpenCode, and GitHub Copilot CLI. Restart your agent session afterward to receive the context.\n`,
+    server: `Usage: crux-axi server [--port 4387] [--verbose]\n\nRun the local Crux Editor server. Pass --verbose (or set CRUX_AXI_DEBUG=1) to log session and watcher events to stderr. Detached server output is appended to ~/.crux-axi/server.log, or CRUX_AXI_STATE_DIR/server.log when set, for startup and crash diagnostics.\n\nCRUX_AXI_HOST sets the bind address (default 127.0.0.1; a wildcard 0.0.0.0 or :: binds every interface). Binding beyond loopback exposes an unauthenticated server that can read and serve arbitrary local files to anything that can reach it, so only do so on a trusted network. CRUX_AXI_LINK_HOST sets the hostname written into generated session links (default: the bind address, or loopback when bound to a wildcard). See README's Allowed hosts section for Host allowlisting and CRUX_AXI_ALLOWED_HOSTS. CRUX_AXI_NO_OPEN=1 (or --no-open) suppresses the local browser launch.\n`,
   };
 }
 

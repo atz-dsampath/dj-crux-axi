@@ -14,7 +14,7 @@ function feedbackResult(result) {
 }
 
 test("queued prompts are returned with DOM snapshot context and then cleared", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -41,7 +41,7 @@ test("queued prompts are returned with DOM snapshot context and then cleared", a
 });
 
 test("queued text selection prompts preserve range anchors", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -73,7 +73,7 @@ test("queued text selection prompts preserve range anchors", async () => {
 });
 
 test("queued mermaid node prompts preserve node identity and drop unknown fields", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -120,7 +120,7 @@ test("queued mermaid node prompts preserve node identity and drop unknown fields
 });
 
 test("queued whiteboard prompts normalize the excalidraw-scene target to its fixed shape", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -171,7 +171,7 @@ test("queued whiteboard prompts normalize the excalidraw-scene target to its fix
 });
 
 test("layout warnings are returned as feedback and then cleared", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -215,7 +215,7 @@ test("layout warnings are returned as feedback and then cleared", async () => {
 });
 
 test("warning-only layout observations never become agent feedback", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -249,7 +249,7 @@ test("warning-only layout observations never become agent feedback", async () =>
 });
 
 test("a severe finding re-reported after the agent already received it is marked persistent", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -280,7 +280,7 @@ test("a severe finding re-reported after the agent already received it is marked
 });
 
 test("a severe finding that materially worsens at mobile is fresh", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -312,7 +312,7 @@ test("a severe finding that materially worsens at mobile is fresh", async () => 
 });
 
 test("a severe finding is fresh again after a clean audit resolves it", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -342,7 +342,7 @@ test("a severe finding is fresh again after a clean audit resolves it", async ()
 });
 
 test("persistence memory survives reopening the same artifact", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -371,7 +371,7 @@ test("persistence memory survives reopening the same artifact", async () => {
 });
 
 test("reopening a session clears stale layout warnings", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -402,7 +402,7 @@ test("reopening a session clears stale layout warnings", async () => {
 });
 
 test("empty layout warning reports clear pending warnings without waking feedback", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -432,7 +432,7 @@ test("empty layout warning reports clear pending warnings without waking feedbac
 });
 
 test("ending a session makes feedback return ended", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -450,7 +450,7 @@ test("ending a session makes feedback return ended", async () => {
 });
 
 test("ending a session defaults to agent-initiated and takeFeedback reports who ended it", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -470,7 +470,7 @@ test("ending a session defaults to agent-initiated and takeFeedback reports who 
 });
 
 test("ending a session as the user is recorded distinctly from an agent end", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -490,7 +490,7 @@ test("ending a session as the user is recorded distinctly from an agent end", as
 });
 
 test("agent cleanup cannot overwrite an existing user end", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -511,7 +511,7 @@ test("agent cleanup cannot overwrite an existing user end", async () => {
 });
 
 test("the final feedback batch before an end flags session_ended with who ended it", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -539,7 +539,7 @@ test("the final feedback batch before an end flags session_ended with who ended 
 });
 
 test("queued prompts can atomically carry a browser end intent", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -567,7 +567,7 @@ test("queued prompts can atomically carry a browser end intent", async () => {
 });
 
 test("late prompts after a user end preserve the ended session state", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -599,7 +599,7 @@ test("late prompts after a user end preserve the ended session state", async () 
 });
 
 test("late layout warnings do not reopen ended sessions", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -633,7 +633,7 @@ test("late layout warnings do not reopen ended sessions", async () => {
 });
 
 test("prompts queued before ending are still delivered before the ended status", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -662,7 +662,7 @@ test("prompts queued before ending are still delivered before the ended status",
 });
 
 test("agent replies are stored in session chat history", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");
@@ -683,7 +683,7 @@ test("agent replies are stored in session chat history", async () => {
 });
 
 test("freeform user prompts are stored in session chat history", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lavish-store-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "crux-store-"));
   try {
     const stateFile = path.join(dir, "state.json");
     const artifact = path.join(dir, "artifact.html");

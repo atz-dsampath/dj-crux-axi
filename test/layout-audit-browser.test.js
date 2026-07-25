@@ -7,7 +7,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-const runBrowserE2e = process.env.LAVISH_AXI_BROWSER_E2E === "1";
+const runBrowserE2e = process.env.CRUX_AXI_BROWSER_E2E === "1";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixtures = path.join(repoRoot, "test/fixtures/layout-audit");
 
@@ -39,23 +39,23 @@ test(
   "real browser layout audit stays silent on acceptable pages and reports one severe root per broken case",
   { skip: !runBrowserE2e, timeout: 300_000 },
   async () => {
-    const temp = await mkdtemp(path.join(tmpdir(), "lavish-layout-browser-"));
+    const temp = await mkdtemp(path.join(tmpdir(), "crux-layout-browser-"));
     const port = await freePort();
-    const lavishEnv = {
-      LAVISH_AXI_PORT: String(port),
-      LAVISH_AXI_STATE_DIR: path.join(temp, "state"),
-      LAVISH_AXI_NO_OPEN: "1",
-      LAVISH_AXI_TELEMETRY: "0",
-      LAVISH_AXI_HOST: "127.0.0.1",
-      LAVISH_AXI_LINK_HOST: "127.0.0.1",
+    const cruxEnv = {
+      CRUX_AXI_PORT: String(port),
+      CRUX_AXI_STATE_DIR: path.join(temp, "state"),
+      CRUX_AXI_NO_OPEN: "1",
+      CRUX_AXI_TELEMETRY: "0",
+      CRUX_AXI_HOST: "127.0.0.1",
+      CRUX_AXI_LINK_HOST: "127.0.0.1",
     };
     const chromeEnv = {
-      CHROME_DEVTOOLS_AXI_SESSION: `lavish-layout-${process.pid}`,
+      CHROME_DEVTOOLS_AXI_SESSION: `crux-layout-${process.pid}`,
       CHROME_DEVTOOLS_AXI_USER_DATA_DIR: path.join(temp, "chrome"),
     };
 
     function openArtifact(file) {
-      const output = run(process.execPath, ["bin/lavish-axi.js", file, "--no-open"], lavishEnv);
+      const output = run(process.execPath, ["bin/crux-axi.js", file, "--no-open"], cruxEnv);
       const url = output.match(/url:\s*"([^"]+)"/)?.[1];
       assert.ok(url, output);
       return { file, url };
@@ -79,12 +79,12 @@ test(
         chromeEnv,
       );
       const pollTimeout = expectedCount === 0 ? "500" : "8000";
-      let poll = run(process.execPath, ["bin/lavish-axi.js", "poll", file, "--timeout-ms", pollTimeout], lavishEnv);
+      let poll = run(process.execPath, ["bin/crux-axi.js", "poll", file, "--timeout-ms", pollTimeout], cruxEnv);
       const expectedWarnings = new RegExp(`layout_warnings\\[${expectedCount}\\]`);
       if (expectedCount > 0 && !expectedWarnings.test(poll)) {
         run("chrome-devtools-axi", ["open", url], chromeEnv);
         run("chrome-devtools-axi", ["wait", String(settleMs)], chromeEnv, settleMs + 45_000);
-        poll = run(process.execPath, ["bin/lavish-axi.js", "poll", file, "--timeout-ms", pollTimeout], lavishEnv);
+        poll = run(process.execPath, ["bin/crux-axi.js", "poll", file, "--timeout-ms", pollTimeout], cruxEnv);
       }
 
       if (expectedCount === 0) {
@@ -142,7 +142,7 @@ test(
       );
       assert.match(held, /true/);
       assert.match(
-        run(process.execPath, ["bin/lavish-axi.js", "poll", revalidationFile, "--timeout-ms", "8000"], lavishEnv),
+        run(process.execPath, ["bin/crux-axi.js", "poll", revalidationFile, "--timeout-ms", "8000"], cruxEnv),
         /layout_warnings\[3\]/,
       );
       await writeFile(
@@ -161,7 +161,7 @@ test(
       assert.match(repaired, /gate.*false/);
       assert.match(repaired, /bannerHidden.*true/);
     } finally {
-      run(process.execPath, ["bin/lavish-axi.js", "stop", "--port", String(port)], lavishEnv, 15_000);
+      run(process.execPath, ["bin/crux-axi.js", "stop", "--port", String(port)], cruxEnv, 15_000);
       run("chrome-devtools-axi", ["stop"], chromeEnv);
       await rm(temp, { recursive: true, force: true });
     }

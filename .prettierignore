@@ -1,9 +1,9 @@
 dist
 node_modules
-.lavish
-.lavish-axi
+.crux
+.crux-axi
 .no-mistakes
-lavish-code-review.html
+crux-code-review.html
 package-lock.json
 CHANGELOG.md
 .agents

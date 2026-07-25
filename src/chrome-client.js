@@ -1,11 +1,11 @@
 /* global EventSource, document, location, window */
 
-const sessionDataElement = document.getElementById("lavish-session");
+const sessionDataElement = document.getElementById("crux-session");
 const sessionData = JSON.parse(sessionDataElement?.textContent || "{}");
 const key = String(sessionData.key || "");
 const filePath = String(sessionData.file || "");
-const queueStorageKey = "lavish-axi:queued:" + key;
-const internalQueueKeyField = "_lavishQueueKey";
+const queueStorageKey = "crux-axi:queued:" + key;
+const internalQueueKeyField = "_cruxQueueKey";
 const initialChat = Array.isArray(sessionData.initialChat) ? sessionData.initialChat : [];
 const MODE_TOGGLE_HOTKEY_KEY = String(sessionData.modeToggleHotkeyKey || "").toLowerCase();
 
@@ -301,7 +301,7 @@ function postToFrame(message) {
 
 function requestSnapshot(action) {
   snapshotRequests.push(action);
-  postToFrame({ type: "lavish:requestSnapshot" });
+  postToFrame({ type: "crux:requestSnapshot" });
 }
 
 function sendQueued(endAfter) {
@@ -415,7 +415,7 @@ function setLayoutGateCard(state) {
   }
 
   layoutGateTitle.innerHTML = "Checking layout.<br>One moment.";
-  layoutGateCopy.textContent = "Lavish is waiting for fonts and final geometry before revealing this artifact.";
+  layoutGateCopy.textContent = "Crux is waiting for fonts and final geometry before revealing this artifact.";
 }
 
 function setLayoutGateActive(active) {
@@ -525,7 +525,7 @@ function markSessionEnded() {
   if (presenceBanner) presenceBanner.hidden = true;
   layoutGateManuallyBypassed = true;
   revealLayoutGate();
-  postToFrame({ type: "lavish:setAnnotationMode", enabled: false });
+  postToFrame({ type: "crux:setAnnotationMode", enabled: false });
   endedOverlay.hidden = false;
 }
 
@@ -579,8 +579,8 @@ async function exportArtifact() {
   try {
     const response = await fetch("/api/" + key + "/export");
     if (!response.ok) throw new Error("export failed");
-    const warningCount = Number(response.headers.get("x-lavish-export-warning-count") || "0");
-    const noticeCount = Number(response.headers.get("x-lavish-export-notice-count") || "0");
+    const warningCount = Number(response.headers.get("x-crux-export-warning-count") || "0");
+    const noticeCount = Number(response.headers.get("x-crux-export-notice-count") || "0");
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -782,7 +782,7 @@ async function handleWhiteboardReady(index, mode, isCurrent) {
     record.sourceHash = String(source.hash || "");
     if (!isCurrent()) return false;
     postToWhiteboard(index, mode, {
-      type: "lavish-whiteboard:init",
+      type: "crux-whiteboard:init",
       mode,
       diagramIndex: index,
       diagramId: record.diagramId,
@@ -808,7 +808,7 @@ function showWhiteboardOverlay(index) {
   inlineWhiteboardChannels.delete(index);
   whiteboardError.hidden = true;
   whiteboardOverlay.hidden = false;
-  postToFrame({ type: "lavish:suspendWhiteboard", diagramIndex: index });
+  postToFrame({ type: "crux:suspendWhiteboard", diagramIndex: index });
   // A fresh document per open: the frame boots, posts ready, and receives its
   // init - no stale editor state can leak between opens.
   whiteboardFrame.src = "/whiteboard-frame?diagramIndex=" + encodeURIComponent(String(index));
@@ -822,7 +822,7 @@ function finishWhiteboardClose(index) {
   overlayFrameReady = false;
   overlayChannelId = "";
   inlineWhiteboardChannels.delete(index);
-  if (!ended) postToFrame({ type: "lavish:resumeWhiteboard", diagramIndex: index });
+  if (!ended) postToFrame({ type: "crux:resumeWhiteboard", diagramIndex: index });
 }
 
 function whiteboardTeardownKey(index, placement) {
@@ -843,7 +843,7 @@ function beginWhiteboardTeardown(index, placement, onComplete) {
   });
   const teardown = { index, placement, flushId, promise, resolve, onComplete };
   whiteboardTeardowns.set(key, teardown);
-  const message = { type: "lavish-whiteboard:prepareTeardown", flushId };
+  const message = { type: "crux-whiteboard:prepareTeardown", flushId };
   postToWhiteboard(index, placement, message);
   return promise;
 }
@@ -882,7 +882,7 @@ function beginWhiteboardFlush(index, placement) {
     resolve = complete;
   });
   whiteboardFlushes.set(flushKey, { index, placement, flushId, promise, resolve });
-  postToWhiteboard(index, placement, { type: "lavish-whiteboard:flush", flushId });
+  postToWhiteboard(index, placement, { type: "crux-whiteboard:flush", flushId });
   return promise;
 }
 
@@ -971,12 +971,12 @@ function handleWhiteboardSave(index, message, mode) {
   const flushId = String(message.flushId || "");
   saveWhiteboardScene(index, message).then(
     () => {
-      if (flushId) postToWhiteboard(index, mode, { type: "lavish-whiteboard:saveResult", flushId, ok: true });
+      if (flushId) postToWhiteboard(index, mode, { type: "crux-whiteboard:saveResult", flushId, ok: true });
     },
     (error) => {
       if (flushId) {
         postToWhiteboard(index, mode, {
-          type: "lavish-whiteboard:saveResult",
+          type: "crux-whiteboard:saveResult",
           flushId,
           ok: false,
           error: error instanceof Error ? error.message : String(error),
@@ -1039,11 +1039,11 @@ async function queueWhiteboardFeedback(index, message, mode) {
       // earlier unsent prompt instead of stacking duplicates.
       [internalQueueKeyField]: "whiteboard:" + index,
     });
-    postToWhiteboard(index, mode, { type: "lavish-whiteboard:queueResult", ok: true });
+    postToWhiteboard(index, mode, { type: "crux-whiteboard:queueResult", ok: true });
     if (mode === "overlay") closeWhiteboard();
   } catch (error) {
     postToWhiteboard(index, mode, {
-      type: "lavish-whiteboard:queueResult",
+      type: "crux-whiteboard:queueResult",
       ok: false,
       error: error instanceof Error ? error.message : String(error),
     });
@@ -1066,7 +1066,7 @@ async function refreshWhiteboardSource() {
       record.source = source ? String(source.source || "") : "";
       record.sourceHash = nextHash;
       postToWhiteboardOverlay({
-        type: "lavish-whiteboard:sourceChanged",
+        type: "crux-whiteboard:sourceChanged",
         source: record.source,
         sourceHash: record.sourceHash,
       });
@@ -1082,20 +1082,20 @@ function validWhiteboardIndex(value) {
 }
 
 function handleAuthenticatedWhiteboardMessage(index, message, mode) {
-  if (message.type === "lavish-whiteboard:save") handleWhiteboardSave(index, message, mode);
-  if (message.type === "lavish-whiteboard:queueFeedback") queueWhiteboardFeedback(index, message, mode);
-  if (message.type === "lavish-whiteboard:maximize" && mode === "inline") openWhiteboardOverlay(index);
-  if (message.type === "lavish-whiteboard:close" && mode === "overlay") closeWhiteboard();
-  if (message.type === "lavish-whiteboard:teardownReady") finishWhiteboardTeardown(index, message, mode);
-  if (message.type === "lavish-whiteboard:teardownFailed") failWhiteboardTeardown(index, message, mode);
-  if (message.type === "lavish-whiteboard:flushComplete") finishWhiteboardFlush(index, message, mode);
+  if (message.type === "crux-whiteboard:save") handleWhiteboardSave(index, message, mode);
+  if (message.type === "crux-whiteboard:queueFeedback") queueWhiteboardFeedback(index, message, mode);
+  if (message.type === "crux-whiteboard:maximize" && mode === "inline") openWhiteboardOverlay(index);
+  if (message.type === "crux-whiteboard:close" && mode === "overlay") closeWhiteboard();
+  if (message.type === "crux-whiteboard:teardownReady") finishWhiteboardTeardown(index, message, mode);
+  if (message.type === "crux-whiteboard:teardownFailed") failWhiteboardTeardown(index, message, mode);
+  if (message.type === "crux-whiteboard:flushComplete") finishWhiteboardFlush(index, message, mode);
 }
 
 function handleInlineWhiteboardMessage(event, message) {
   if (ended) return;
   const index = validWhiteboardIndex(message.diagramIndex);
   if (index === null || !event.source) return;
-  if (message.type === "lavish-whiteboard:ready") {
+  if (message.type === "crux-whiteboard:ready") {
     if (inlineWhiteboardChannels.has(index)) return;
     const channelId = String(message.channelToken || "");
     if (!channelId) return;
@@ -1121,7 +1121,7 @@ function handleOverlayWhiteboardMessage(event, message) {
   if (event.source !== whiteboardFrame.contentWindow || overlayIndex === null) return;
   const index = validWhiteboardIndex(message.diagramIndex);
   if (index === null || index !== overlayIndex) return;
-  if (message.type === "lavish-whiteboard:ready") {
+  if (message.type === "crux-whiteboard:ready") {
     if (overlayFrameReady || overlayChannelId) return;
     const channelId = String(message.channelToken || "");
     if (!channelId) return;
@@ -1196,10 +1196,10 @@ window.addEventListener("message", (event) => {
   if (event.source !== frame.contentWindow) return;
 
   const msg = event.data || {};
-  if (msg.type === "lavish:queuePrompt") {
+  if (msg.type === "crux:queuePrompt") {
     enqueuePrompt(msg.prompt);
   }
-  if (msg.type === "lavish:snapshot") {
+  if (msg.type === "crux:snapshot") {
     const snapshotAction = snapshotRequests.shift() || "submit";
     if (snapshotAction === "copy") {
       copyText(msg.snapshot || "");
@@ -1208,16 +1208,16 @@ window.addEventListener("message", (event) => {
       submitQueued();
     }
   }
-  if (msg.type === "lavish:scroll") {
+  if (msg.type === "crux:scroll") {
     lastScroll = { x: Number(msg.x) || 0, y: Number(msg.y) || 0 };
   }
-  if (msg.type === "lavish:layoutWarnings") {
+  if (msg.type === "crux:layoutWarnings") {
     handleLayoutWarningsForGate(msg.layout_warnings);
     submitLayoutWarnings(msg.layout_warnings).catch(() => {});
   }
-  if (msg.type === "lavish:sendQueuedPrompts") sendQueued();
-  if (msg.type === "lavish:endSession") endSession();
-  if (msg.type === "lavish:toggleAnnotationMode") toggleAnnotationMode();
+  if (msg.type === "crux:sendQueuedPrompts") sendQueued();
+  if (msg.type === "crux:endSession") endSession();
+  if (msg.type === "crux:toggleAnnotationMode") toggleAnnotationMode();
 });
 
 loadFrame();
@@ -1226,7 +1226,7 @@ function toggleAnnotationMode() {
   if (ended) return;
   annotation = !annotation;
   annotationSwitch.setAttribute("aria-pressed", String(annotation));
-  postToFrame({ type: "lavish:setAnnotationMode", enabled: annotation });
+  postToFrame({ type: "crux:setAnnotationMode", enabled: annotation });
 }
 
 annotationSwitch.onclick = toggleAnnotationMode;
@@ -1286,12 +1286,12 @@ document.addEventListener(
   true,
 );
 frame.addEventListener("load", () => {
-  postToFrame({ type: "lavish:setAnnotationMode", enabled: annotation && !ended });
+  postToFrame({ type: "crux:setAnnotationMode", enabled: annotation && !ended });
   // Replay the pre-reload scroll position so hot reloads don't jump the artifact to the top.
-  postToFrame({ type: "lavish:restoreScroll", x: lastScroll.x, y: lastScroll.y });
+  postToFrame({ type: "crux:restoreScroll", x: lastScroll.x, y: lastScroll.y });
   if (overlayIndex !== null) {
     inlineWhiteboardChannels.delete(overlayIndex);
-    postToFrame({ type: "lavish:suspendWhiteboard", diagramIndex: overlayIndex });
+    postToFrame({ type: "crux:suspendWhiteboard", diagramIndex: overlayIndex });
   }
 });
 
