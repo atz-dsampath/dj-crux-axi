@@ -10,6 +10,8 @@ import test from "node:test";
 
 import { AxiError } from "axi-sdk-js";
 
+import { defaultPort } from "../src/paths.js";
+
 process.env.CRUX_AXI_HOST = "127.0.0.1";
 process.env.CRUX_AXI_LINK_HOST = "127.0.0.1";
 
@@ -1661,12 +1663,31 @@ test("local built CLI opens force a server restart while source and installed ru
 });
 
 test("shouldRestartServer reuses a server running the same version", () => {
-  assert.equal(shouldRestartServer("0.1.4", { ok: true, version: "0.1.4" }), false);
+  assert.equal(shouldRestartServer("0.1.4", { ok: true, app: "crux-axi", version: "0.1.4" }), false);
+});
+
+test("shouldRestartServer refuses to adopt a foreign app holding the port", () => {
+  // Regression: crux-axi and lavish-axi both default to the same port and share a version
+  // lineage, so a version-only handshake silently adopted the other product's server and
+  // served Crux artifacts inside Lavish's chrome, writing sessions into its state dir.
+  // Identity must be part of the handshake, not just the version number.
+  assert.equal(shouldRestartServer("0.1.43", { ok: true, app: "lavish-axi", version: "0.1.43" }), true);
+  assert.equal(shouldRestartServer("0.1.4", { ok: true, app: "something-else", version: "0.1.4" }), true);
+});
+
+test("shouldRestartServer does not adopt a same-version server that will not identify itself", () => {
+  // A body carrying a version but no app cannot be confirmed as ours. canControlServerOnPort
+  // already treats it as un-controllable, so adopting it here was the inconsistency that let
+  // an unidentified server through.
+  assert.equal(shouldRestartServer("0.1.4", { ok: true, version: "0.1.4" }), true);
 });
 
 test("shouldRestartServer restarts same-version Crux servers when forced", () => {
   assert.equal(shouldRestartServer("0.1.4", { ok: true, app: "crux-axi", version: "0.1.4" }, true), true);
-  assert.equal(shouldRestartServer("0.1.4", { ok: true, app: "other", version: "0.1.4" }, true), false);
+  // A foreign server is never reused, forced or not. This does not mean we kill it:
+  // shouldKillProcessOnPort still refuses to signal a non-Crux process, and
+  // canControlServerOnPort turns this into a clear error instead.
+  assert.equal(shouldRestartServer("0.1.4", { ok: true, app: "other", version: "0.1.4" }, true), true);
 });
 
 test("shouldRestartServer restarts when the running server reports a different version", () => {
@@ -1909,3 +1930,20 @@ async function startFakeHtmlApp(requests) {
     close: () => new Promise((resolve) => server.close(() => resolve())),
   };
 }
+
+test("defaultPort does not collide with the upstream project it forked from", () => {
+  // crux-axi forked from lavish-axi, which defaults to 4387. Sharing a port meant whichever
+  // product started first won and the other silently attached to it. Identity checking in
+  // shouldRestartServer turns that into a clear error; a distinct port avoids the encounter.
+  const saved = process.env.CRUX_AXI_PORT;
+  delete process.env.CRUX_AXI_PORT;
+  try {
+    assert.equal(defaultPort(), 4390);
+    assert.notEqual(defaultPort(), 4387);
+    process.env.CRUX_AXI_PORT = "5123";
+    assert.equal(defaultPort(), 5123, "CRUX_AXI_PORT must still override the default");
+  } finally {
+    if (saved === undefined) delete process.env.CRUX_AXI_PORT;
+    else process.env.CRUX_AXI_PORT = saved;
+  }
+});

@@ -812,6 +812,14 @@ export function shouldRestartServer(currentVersion, healthBody, forceRestart = f
   if (!healthBody || typeof healthBody !== "object") return false;
   if (forceRestart && healthBody.app === "crux-axi") return true;
   if (typeof healthBody.version !== "string" || healthBody.version === "") return true;
+  // Identity is checked before version because crux-axi forked from lavish-axi: the two share
+  // a version lineage AND historically a default port, so a version-only handshake matched a
+  // foreign server exactly and silently adopted it - serving Crux artifacts inside the other
+  // product's chrome and writing sessions into its state dir. Anything that will not identify
+  // itself as crux-axi is not ours to reuse. Refusing here is safe: the caller falls through to
+  // canControlServerOnPort, which declines to shut down a foreign server and raises a clear
+  // "port is occupied by a non-Crux server" error instead of killing someone else's process.
+  if (healthBody.app !== "crux-axi") return true;
   return healthBody.version !== currentVersion;
 }
 
@@ -1069,7 +1077,7 @@ function createCommandHelp({ agent = "generic" } = {}) {
     playbook: `Usage: crux-axi playbook [playbook_id]\n\nList focused artifact guidance playbooks, or show one playbook by ID. Known IDs: diagram, table, comparison, plan, code, input, slides.\n\n${PLAYBOOK_ROUTER_HELP}\n\nExamples:\n  crux-axi playbook\n  crux-axi playbook diagram\n  crux-axi playbook input\n`,
     design: `Usage: crux-axi design\n\nShow a copy-pasteable CDN snippet for Tailwind CSS browser runtime v4 + DaisyUI v5 + themes, Mermaid diagram tooling, a content-to-playbook router, an optional layout safety CSS snippet, plus technical reference for DaisyUI components. ${PLAYBOOK_ROUTER_HELP} Crux artifacts stay portable HTML. This CDN snippet is the design fallback, not the default: inspect the subject project before falling back, and paste the layout safety CSS only when useful for dense nested grid/flex layouts, badges, wide fonts, or local media. ${DESIGN_PRIORITY_RULE}\n`,
     setup: `Usage: crux-axi setup hooks\n\nInstall or repair agent SessionStart hooks for crux-axi ambient context in Claude Code, Codex, OpenCode, and GitHub Copilot CLI. Restart your agent session afterward to receive the context.\n`,
-    server: `Usage: crux-axi server [--port 4387] [--verbose]\n\nRun the local Crux Editor server. Pass --verbose (or set CRUX_AXI_DEBUG=1) to log session and watcher events to stderr. Detached server output is appended to ~/.crux-axi/server.log, or CRUX_AXI_STATE_DIR/server.log when set, for startup and crash diagnostics.\n\nCRUX_AXI_HOST sets the bind address (default 127.0.0.1; a wildcard 0.0.0.0 or :: binds every interface). Binding beyond loopback exposes an unauthenticated server that can read and serve arbitrary local files to anything that can reach it, so only do so on a trusted network. CRUX_AXI_LINK_HOST sets the hostname written into generated session links (default: the bind address, or loopback when bound to a wildcard). See README's Allowed hosts section for Host allowlisting and CRUX_AXI_ALLOWED_HOSTS. CRUX_AXI_NO_OPEN=1 (or --no-open) suppresses the local browser launch.\n`,
+    server: `Usage: crux-axi server [--port 4390] [--verbose]\n\nRun the local Crux Editor server. Pass --verbose (or set CRUX_AXI_DEBUG=1) to log session and watcher events to stderr. Detached server output is appended to ~/.crux-axi/server.log, or CRUX_AXI_STATE_DIR/server.log when set, for startup and crash diagnostics.\n\nCRUX_AXI_HOST sets the bind address (default 127.0.0.1; a wildcard 0.0.0.0 or :: binds every interface). Binding beyond loopback exposes an unauthenticated server that can read and serve arbitrary local files to anything that can reach it, so only do so on a trusted network. CRUX_AXI_LINK_HOST sets the hostname written into generated session links (default: the bind address, or loopback when bound to a wildcard). See README's Allowed hosts section for Host allowlisting and CRUX_AXI_ALLOWED_HOSTS. CRUX_AXI_NO_OPEN=1 (or --no-open) suppresses the local browser launch.\n`,
   };
 }
 

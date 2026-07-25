@@ -65,5 +65,5 @@ export async function ensureStateDir() {
 }
 
 export function defaultPort() {
-  return Number(process.env.CRUX_AXI_PORT || 4387);
+  return Number(process.env.CRUX_AXI_PORT || 4390);
 }
