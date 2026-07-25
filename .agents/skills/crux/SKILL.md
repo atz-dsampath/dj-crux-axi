@@ -39,14 +39,34 @@ bundle rather than reproduced from memory; `[i]` marks the few that are inferred
 Lavish's dark-ink-and-brass palette and reference Lavish token names. They are structurally
 useful - Crux has the same two-pane shape - but do not copy their color decisions.
 
-**Deliberately absent.** Crux has no wordmark or brand mark. Do not reuse Lavish's; those are
-the upstream project's trademarks, and the MIT license this fork inherits grants copyright
-permission, not trademark rights.
+**Brand assets.** `assets/crux-wordmark.svg` and `assets/crux-mark.svg` are Crux's own. Do not
+reuse Lavish's wordmark or mark; those are the upstream project's trademarks, and the MIT license
+this fork inherits grants copyright permission, not trademark rights.
+
+## The wordmark
+
+`assets/crux-wordmark.svg` is lowercase "crux" with the `x` in accent green. The accent sits on
+that letter because it carries the meaning: crux is the decisive point, and X is what you mark a
+spot with - which is exactly what annotating an element does.
+
+It is **real vector outlines** extracted from Fredoka SemiBold, not live `<text>`, so it keeps its
+shape where the webfont is absent. Two rules for using it:
+
+- `cru` is `currentColor`; only the `x` is a fixed `#58cc02`. **Inline the SVG** in dark contexts.
+  Loaded through `<img>`, an external SVG cannot inherit `currentColor` and `cru` renders black.
+- Do not re-typeset it by setting "crux" in Fredoka and calling that the logo. A wordmark that
+  reflows with the available font is not a wordmark.
+
+`assets/crux-mark.svg` is the square counterpart - a rounded 64x64 tile with a white X - for
+favicon, avatar, and app icon, where a wordmark cannot fit. It stays legible at 16px and in
+grayscale, which the accent-X wordmark also survives because the letterforms carry it without
+colour.
 
 ## Where things live
 
 - `colors_and_type.css` - Crux's token system. Light + dark. The source of truth for color,
   type, spacing, radii, and the press-down button.
+- `assets/` - crux-wordmark.svg (outlined Fredoka, accent X) and crux-mark.svg (square icon)
 - `references/evidence.md` - **cited** interaction principles: artifact trustworthiness, response
   time budgets, direct manipulation, interruption cost, and the two places evidence conflicts
   with our locked decisions. Read this before making behavioral decisions. Every claim carries a
