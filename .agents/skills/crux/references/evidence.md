@@ -1,6 +1,6 @@
-# Evidence base: Crucial Editor interaction principles
+# Evidence base: Crux Editor interaction principles
 
-Why this file exists: Crucial Editor's design decisions should be traceable to something
+Why this file exists: Crux Editor's design decisions should be traceable to something
 other than taste.
 Everything below is tied to a real, citable source with a DOI.
 Where a claim is not evidenced, this file says so rather than dressing up an opinion as a finding.
@@ -30,7 +30,7 @@ Each principle carries one of these, because the strength of a recommendation sh
 
 ## Part 1 - What a trustworthy artifact looks like
 
-Crucial renders artifacts an agent generated. Nobody verified them. That framing drives this section.
+Crux renders artifacts an agent generated. Nobody verified them. That framing drives this section.
 
 ### 1.1 Polish inflates perceived credibility. Counteract it deliberately. **[full text]**
 
@@ -38,9 +38,9 @@ Allen, Erhardt & Calhoun report that identical information rendered on aesthetic
 brain images is judged **more persuasive and more credible** than the same information shown
 plainly (citing Keehner et al. 2011; McCabe & Castel 2008).
 
-This is the central hazard of the product. Crucial exists to make agent output beautiful, which
+This is the central hazard of the product. Crux exists to make agent output beautiful, which
 means it is structurally a credibility amplifier for claims nobody checked. A confidently wrong
-agent becomes *more* convincing after Crucial renders it.
+agent becomes *more* convincing after Crux renders it.
 
 Implication: visual polish must never be the only quality signal on screen. Provenance -
 where a number came from, how confident the agent is, what was assumed - needs standing equal
@@ -69,7 +69,7 @@ they note that poor labeling of error bars has been shown to encourage misinterp
 Direct finding: "Integrating descriptions into the figure (rather than the legend) discourages
 misinterpretation and permits readers to understand the display more quickly."
 
-This is independent empirical support for Crucial's core interaction. Anchored, in-artifact
+This is independent empirical support for Crux's core interaction. Anchored, in-artifact
 annotation is not merely a nicer affordance than a detached comment sidebar - it measurably
 reduces misreading and speeds comprehension. Build around it on purpose.
 
@@ -91,7 +91,7 @@ Their strongest technique: map the value to hue *and* the uncertainty to transpa
 to a thresholded view, "no information is lost," while a threshold collapses rich data into a
 dichotomous significant/not that inherits every limitation of all-or-none testing.
 
-Implication for Crucial: avoid UI that silently drops content below some confidence cutoff.
+Implication for Crux: avoid UI that silently drops content below some confidence cutoff.
 Fade it, don't delete it.
 
 ### 1.7 Take human perceptual limits as a design constraint. **[abstract]**
@@ -119,7 +119,7 @@ widely reproduced thresholds:
 | ~1s | Preserves uninterrupted flow of thought. Acceptable for opening a panel or committing an annotation. |
 | ~10s | Outer limit of held attention. Beyond this the user needs a progress signal or they leave. |
 
-Implication: hover, selection, and mode switching in Crucial are 0.1s obligations, not
+Implication: hover, selection, and mode switching in Crux are 0.1s obligations, not
 optimizations. Anything crossing 10s - agent round trips - must show progress rather than
 silence.
 
@@ -134,7 +134,7 @@ whose effect on the object is immediately visible.
 
 Implication: clicking the thing you mean is the correct primitive for annotation. Every
 annotation action should be incrementally reversible with the result visible without a refresh.
-Crucial should never require the user to describe in prose which element they meant.
+Crux should never require the user to describe in prose which element they meant.
 
 ### 2.3 Target size and distance set interaction cost. **[metadata]**
 
@@ -159,7 +159,7 @@ reviewing content.
 Mark, Gudith & Klocke (2008) found interrupted work is completed in *less* time, but at the cost
 of higher frustration, time pressure, effort, and stress.
 
-Implication, and it is a sharp one for this product: Crucial's whole loop is an interruption
+Implication, and it is a sharp one for this product: Crux's whole loop is an interruption
 engine - the agent works, then interrupts a human to review. Speed of the review loop is not
 the metric to optimize. The user finishing faster is compatible with the user feeling worse.
 Design for calm resumption: preserve context, never lose queued feedback, make it obvious where
@@ -187,7 +187,7 @@ Duolingo's signal system is green for correct and red for incorrect. That is exa
 prohibited pairing, and it fails for roughly 8% of men with protanopia or deuteranopia.
 
 **Resolution: color may carry correctness, but never alone.** Every correct/error state in
-Crucial must also carry a non-color channel - an icon, a position, or a word. Any state that is
+Crux must also carry a non-color channel - an icon, a position, or a word. Any state that is
 distinguishable only by hue is a defect. This preserves the Duolingo look while satisfying the
 checklist; the two are compatible as long as color is redundant rather than load-bearing.
 
