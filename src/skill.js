@@ -16,8 +16,12 @@ function playbookList(playbooks) {
   return playbooks.map((p) => `- \`${p.id}\` - ${p.use_when}`).join("\n");
 }
 
+// Commands are emitted as the bare `crux-axi` bin rather than `npx -y crux-axi`.
+// npx re-resolves against the registry on every call, which an agent makes several
+// times per review loop, and it is the sole reason the old skill needed a fallback
+// for sandboxes where `npx -y` exits opaquely. A bin on PATH has neither problem.
 function skillCommandText(text) {
-  return text.replaceAll("`crux-axi", "`npx -y crux-axi");
+  return text;
 }
 
 /**
@@ -34,7 +38,7 @@ export function createSkillMarkdown() {
 name: crux-axi
 description: ${SKILL_DESCRIPTION}
 argument-hint: <what the artifact should show>
-author: Dheeraj Sampath (atz-dsampath)
+author: Dheeraj (atz-dsampath)
 metadata:
   hermes:
     tags: [html, review, artifacts, visualization]
@@ -45,9 +49,10 @@ metadata:
 
 ${skillCommandText(home.description)}
 
-You do not need crux-axi installed globally - invoke it with \`npx -y crux-axi <html-file>\`.
-If crux-axi output shows a follow-up command starting with \`crux-axi\`, run it as \`npx -y crux-axi ...\` instead.
-In restricted subprocess sandboxes, CI, or agent harnesses where \`npx -y\` exits opaquely (for example with status 216), use an already-installed copy directly: \`node "$(npm root)/crux-axi/dist/cli.mjs" <html-file>\` for a local install, \`node "$(npm root -g)/crux-axi/dist/cli.mjs" <html-file>\` for a global install, or the bare \`crux-axi <html-file>\` bin after installing once.
+This skill drives the \`crux-axi\` command, which must be on PATH. Install it once with \`npm install -g crux-axi\`.
+Run commands exactly as shown - \`crux-axi <html-file>\` - and run any follow-up command crux-axi prints verbatim.
+If \`crux-axi\` is not found, install it rather than reaching for \`npx\`: npx re-resolves against the registry on every invocation, and exits opaquely (for example with status 216) inside restricted subprocess sandboxes.
+If a global install is not possible, invoke an existing copy directly: \`node "$(npm root -g)/crux-axi/dist/cli.mjs" <html-file>\`, or \`node "$(npm root)/crux-axi/dist/cli.mjs" <html-file>\` for a local install.
 
 ## Request
 
@@ -63,15 +68,15 @@ ${home.help[home.help.length - 1]}
 ## Workflow
 
 1. Create the HTML artifact (default location \`.crux/<name>.html\` in the working directory).
-2. Run \`npx -y crux-axi <html-file>\` to open or resume a review session in the browser.
-3. Run \`npx -y crux-axi poll <html-file>\` to long-poll for the user's annotations, queued prompts, and browser-proven severe layout failures returned as \`layout_warnings\`.
+2. Run \`crux-axi <html-file>\` to open or resume a review session in the browser.
+3. Run \`crux-axi poll <html-file>\` to long-poll for the user's annotations, queued prompts, and browser-proven severe layout failures returned as \`layout_warnings\`.
    On the first poll, prefer \`--agent-reply "<one-line summary of what you built and what to review first>"\` so the conversation panel opens with context.
    The poll stays silent until the user acts or the real browser proves meaningful content is inaccessible or unusable - leave it running, never kill it.
    Cosmetic, intentional, transient, tiny, and uncertain observations remain silent.
 ${POLL_WAKE_PATH_RULES.map((rule) => `   ${skillCommandText(rule)}`).join("\n")}
 4. If poll returns \`layout_warnings\`, follow the returned \`next_step\`: repair the severe failure and re-check it before involving the human.
 5. Apply human feedback, then poll again with \`--agent-reply "<message>"\` to reply in the browser and keep the loop going under the same foreground-or-verified-wake-path rule.
-6. Run \`npx -y crux-axi end <html-file>\` when the review is finished.
+6. Run \`crux-axi end <html-file>\` when the review is finished.
 7. ${POLL_SEND_AND_END_RULE} Deliver any remaining updates directly in this conversation.
 
 ## Visual guidance
@@ -80,9 +85,9 @@ ${bullets(home.visual_guidance)}
 
 ## Playbooks
 
-Run \`npx -y crux-axi playbook <id>\` for focused, detailed guidance on any of these.
+Run \`crux-axi playbook <id>\` for focused, detailed guidance on any of these.
 ${PLAYBOOK_ROUTER_HELP}
-For flows, architecture, state, or sequence diagrams, do not hand-build boxes-and-arrows from div/flexbox; open the diagram playbook and use the theme-aware Mermaid snippet from \`npx -y crux-axi design\` unless SVG is needed for richly annotated nodes.
+For flows, architecture, state, or sequence diagrams, do not hand-build boxes-and-arrows from div/flexbox; open the diagram playbook and use the theme-aware Mermaid snippet from \`crux-axi design\` unless SVG is needed for richly annotated nodes.
 
 ${playbookList(home.playbooks)}
 
