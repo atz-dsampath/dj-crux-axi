@@ -134,3 +134,29 @@ test("telemetry close waits only up to the requested timeout", async () => {
   assert.equal(requests.length, 1);
   release();
 });
+
+test("telemetry stays off when no analytics host is configured", () => {
+  // This project forked from one whose telemetry defaulted to its author's Umami instance.
+  // A website ID set without a matching host would then post this fork's users to a third
+  // party. Absent an explicit host, the correct outcome is no data - not data to a stranger.
+  const config = resolveTelemetryConfig({
+    env: { CRUX_AXI_UMAMI_WEBSITE_ID: "abc-123" },
+    buildHost: "",
+    buildWebsiteID: "",
+  });
+  assert.equal(config.enabled, false);
+  assert.equal(config.host, "");
+});
+
+test("telemetry enables only when host and website id are both present", () => {
+  const config = resolveTelemetryConfig({
+    env: { CRUX_AXI_UMAMI_WEBSITE_ID: "abc-123", CRUX_AXI_UMAMI_HOST: "https://analytics.example.com" },
+    buildHost: "",
+    buildWebsiteID: "",
+  });
+  assert.deepEqual(config, {
+    enabled: true,
+    host: "https://analytics.example.com",
+    websiteID: "abc-123",
+  });
+});

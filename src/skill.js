@@ -34,7 +34,7 @@ export function createSkillMarkdown() {
 name: crux-axi
 description: ${SKILL_DESCRIPTION}
 argument-hint: <what the artifact should show>
-author: Kun Chen (kunchenguid)
+author: Dheeraj Sampath (atz-dsampath)
 metadata:
   hermes:
     tags: [html, review, artifacts, visualization]

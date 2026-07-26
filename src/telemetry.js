@@ -1,4 +1,7 @@
-const HARDCODED_FALLBACK_HOST = "https://a.kunchenguid.com";
+// No hardcoded analytics host. This project forked from one that defaulted to its author's
+// Umami instance; keeping that default meant a website ID set without a matching host would
+// silently post this fork's users to a third party. Telemetry now requires an explicit host
+// and stays off without one, so the failure mode is "no data" rather than "data to a stranger".
 const UMAMI_PATH = "/api/send";
 const DEFAULT_HOSTNAME = "cli";
 const DEFAULT_TITLE = "Crux Editor CLI";
@@ -17,7 +20,10 @@ export function resolveTelemetryConfig(input) {
     return { enabled: false, host: "", websiteID: "" };
   }
 
-  const host = String(input.env.CRUX_AXI_UMAMI_HOST || "").trim() || input.buildHost.trim() || HARDCODED_FALLBACK_HOST;
+  const host = String(input.env.CRUX_AXI_UMAMI_HOST || "").trim() || input.buildHost.trim();
+  if (!host) {
+    return { enabled: false, host: "", websiteID: "" };
+  }
   return { enabled: true, host, websiteID };
 }
 

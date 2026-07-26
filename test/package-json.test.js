@@ -86,6 +86,6 @@ test("release workflow keeps telemetry env during npm publish prepack", async ()
 
   assert.match(
     workflow,
-    /run: npm publish --access public --provenance\n\s+if: \$\{\{ steps\.release\.outputs\.release_created \}\}\n\s+env:\n\s+CRUX_AXI_UMAMI_HOST: https:\/\/a\.kunchenguid\.com\n\s+CRUX_AXI_UMAMI_WEBSITE_ID: \$\{\{ vars\.CRUX_AXI_UMAMI_WEBSITE_ID \}\}/,
+    /run: npm publish --access public --provenance\n\s+if: \$\{\{ steps\.release\.outputs\.release_created \}\}\n\s+env:\n(?:\s*#[^\n]*\n)*\s+CRUX_AXI_UMAMI_HOST: \$\{\{ vars\.CRUX_AXI_UMAMI_HOST \}\}\n\s+CRUX_AXI_UMAMI_WEBSITE_ID: \$\{\{ vars\.CRUX_AXI_UMAMI_WEBSITE_ID \}\}/,
   );
 });

@@ -24,7 +24,7 @@ test("createSkillMarkdown emits Hermes Agent metadata in frontmatter", () => {
   const md = createSkillMarkdown();
   const frontmatter = md.slice(4, md.indexOf("\n---\n", 4));
 
-  assert.match(frontmatter, /^author: Kun Chen \(kunchenguid\)$/m);
+  assert.match(frontmatter, /^author: Dheeraj Sampath \(atz-dsampath\)$/m);
   assert.match(frontmatter, /^metadata:\n {2}hermes:\n {4}tags: \[[^\]]+\]\n {4}category: \S+$/m);
   assert.doesNotMatch(frontmatter, /^version:/m, "version is omitted to avoid release churn");
 });
