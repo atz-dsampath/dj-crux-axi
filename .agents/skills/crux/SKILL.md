@@ -5,7 +5,7 @@ user-invocable: true
 ---
 
 Read `colors_and_type.css` for the visual language and `references/evidence.md` for how the
-editor should behave. The sibling `../crux-design/` skill holds the component kit and specimen
+editor should behave. The sibling `` skill holds the component kit and specimen
 cards, already themed with these tokens.
 
 If creating visual artifacts (slides, mocks, throwaway prototypes), copy assets out and create
@@ -37,8 +37,8 @@ on screen, never fewer caveats. See `references/evidence.md` §3.2.
   time budgets, direct manipulation, interruption cost, and the two places evidence conflicts
   with our locked decisions. Read this before making behavioral decisions. Every claim carries a
   confidence label and a verified DOI.
-- `../crux-design/preview/` - specimen cards, one concept per card
-- `../crux-design/ui_kits/editor/` - clickable React recreation of the editor chrome
+- `preview/` - specimen cards, one concept per card
+- `ui_kits/editor/` - clickable React recreation of the editor chrome
 
 ## The wordmark
 
@@ -106,4 +106,4 @@ Both came from the design system this one grew out of, and both are dead:
    measurably faster to acquire (`references/evidence.md` §2.3). `--btn-h-md` is 48px for a
    reason.
 7. If you need a component (pill, bubble, annotation card, top bar), open the matching JSX file in
-   `../crux-design/ui_kits/editor/` and copy the styles object - they are already token-driven.
+   `ui_kits/editor/` and copy the styles object - they are already token-driven.

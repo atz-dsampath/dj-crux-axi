@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -29,12 +30,21 @@ test("published package includes the installable skill", async () => {
   assert.ok(packageJson.files.includes("skills/crux-axi"));
 });
 
-test("crux-design agent skill is marked internal for skills CLI discovery", async () => {
-  const skillMd = await readFile(new URL("../.agents/skills/crux-design/SKILL.md", import.meta.url), "utf8");
+test("the crux design skill ships the component kit it points at", async () => {
+  // crux-design used to be a second skill beside this one, shipping a byte-identical
+  // colors_and_type.css and an overlapping description, so an agent had no basis to
+  // choose between them. It was merged in. This asserts the merge stayed whole rather
+  // than leaving SKILL.md pointing at directories that no longer exist.
+  const skillDir = new URL("../.agents/skills/crux/", import.meta.url);
+  const skillMd = await readFile(new URL("SKILL.md", skillDir), "utf8");
   const frontmatter = skillMd.slice(4, skillMd.indexOf("\n---\n", 4));
 
-  assert.match(frontmatter, /^name: crux-design$/m);
-  assert.match(frontmatter, /^metadata:\n {2}internal: true$/m);
+  assert.match(frontmatter, /^name: crux$/m);
+  assert.doesNotMatch(skillMd, /crux-design/);
+
+  for (const entry of ["colors_and_type.css", "preview", "ui_kits/editor", "assets", "references"]) {
+    assert.ok(existsSync(new URL(entry, skillDir)), `crux skill is missing ${entry}`);
+  }
 });
 
 test("public crux skill is not marked internal", async () => {

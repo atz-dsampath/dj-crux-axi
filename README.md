@@ -220,11 +220,38 @@ For flows, architecture, state, or sequence diagrams, open the diagram playbook 
 pnpm run check          # Run all verification commands
 pnpm run build          # Bundle the publishable CLI, chrome, and design assets
 pnpm run build:skill    # Regenerate the installable crux skill
+pnpm run install:skill  # Install the crux design skill + /crux command for local agents
 pnpm test               # Run node:test tests
 pnpm run lint           # Run ESLint
 pnpm run format:check   # Check Prettier formatting
 pnpm run typecheck      # Run TypeScript checkJs validation
 ```
+
+## The crux design skill
+
+The repo carries a second, repo-local skill at `.agents/skills/crux/`: the design system -
+locked philosophy, light and dark tokens, wordmark, component kit, and a cited evidence base
+behind the interaction decisions.
+
+To make it available to your agents and register the `/crux` command:
+
+```sh
+pnpm run install:skill
+```
+
+This links the skill into `~/.agents/skills/`, symlinks it into the Claude, Codex and Copilot
+skill directories, and writes the slash-command files. It is idempotent, refuses to overwrite
+anything it did not create, and `--dry-run` prints the plan without touching the disk.
+
+The wiring needs a script because it is not uniform. OpenCode reads `~/.agents/skills` but does
+not turn skills into slash commands - `user-invocable` is not among its recognised frontmatter
+fields - so `/crux` needs a separate command file. Claude Code reads `~/.claude/skills`. Codex
+and Copilot each read their own directory.
+
+By default the skill is **linked**, so it tracks this checkout and cannot drift out of sync with
+the repo; moving or deleting the checkout breaks it. Pass `--copy` for a detached snapshot.
+
+Restart your agent session afterwards.
 
 ## Credits
 
