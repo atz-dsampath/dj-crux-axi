@@ -56,9 +56,20 @@ jobs:
           CRUX_AXI_UMAMI_HOST: ${{ vars.CRUX_AXI_UMAMI_HOST }}
           CRUX_AXI_UMAMI_WEBSITE_ID: ${{ vars.CRUX_AXI_UMAMI_WEBSITE_ID }}
 
+      # Publishing needs credentials this workflow did not previously supply, which is
+      # why every automated release stopped here. Two ways to give it some:
+      #
+      #   1. Trusted publishing (preferred, nothing to rotate or leak). Configure the
+      #      package on npmjs.com to trust this repo and workflow; the id-token: write
+      #      permission and --provenance below are already in place, and NODE_AUTH_TOKEN
+      #      becomes unnecessary. This is also the option that survives npm restricting
+      #      tokens that bypass 2FA, which a CI token by definition must do.
+      #
+      #   2. A granular access token stored as the NPM_TOKEN repo secret, read below.
       - run: npm publish --access public --provenance
         if: ${{ steps.release.outputs.release_created }}
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           # Both must be set for telemetry to be baked in. Left as repo vars so a fork
           # never inherits another project's analytics endpoint by default.
           CRUX_AXI_UMAMI_HOST: ${{ vars.CRUX_AXI_UMAMI_HOST }}

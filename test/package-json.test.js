@@ -91,11 +91,19 @@ test("release workflow publishes from the release tag checkout", async () => {
   );
 });
 
-test("release workflow keeps telemetry env during npm publish prepack", async () => {
+test("release workflow can authenticate to npm and keeps telemetry env", async () => {
   const workflow = await readFile(new URL("../.github/workflows/release-please.yml", import.meta.url), "utf8");
 
+  // Every automated release used to die at this step: the workflow ran npm publish
+  // with no credentials at all, so release-please would tag a version that never
+  // reached the registry. Assert the auth explicitly - its absence was silent.
   assert.match(
     workflow,
-    /run: npm publish --access public --provenance\n\s+if: \$\{\{ steps\.release\.outputs\.release_created \}\}\n\s+env:\n(?:\s*#[^\n]*\n)*\s+CRUX_AXI_UMAMI_HOST: \$\{\{ vars\.CRUX_AXI_UMAMI_HOST \}\}\n\s+CRUX_AXI_UMAMI_WEBSITE_ID: \$\{\{ vars\.CRUX_AXI_UMAMI_WEBSITE_ID \}\}/,
+    /run: npm publish --access public --provenance\n\s+if: \$\{\{ steps\.release\.outputs\.release_created \}\}\n\s+env:\n(?:\s*#[^\n]*\n)*\s+NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/,
   );
+  assert.match(workflow, /CRUX_AXI_UMAMI_HOST: \$\{\{ vars\.CRUX_AXI_UMAMI_HOST \}\}/);
+  assert.match(workflow, /CRUX_AXI_UMAMI_WEBSITE_ID: \$\{\{ vars\.CRUX_AXI_UMAMI_WEBSITE_ID \}\}/);
+  // --provenance and id-token: write are what make trusted publishing possible, so a
+  // token is an option rather than a requirement.
+  assert.match(workflow, /id-token: write/);
 });
