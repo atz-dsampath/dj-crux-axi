@@ -1,12 +1,12 @@
 ---
 name: crux
-description: Design system and interaction principles for Crux Editor, DJ's in-browser agentic editor that opens agent-generated HTML artifacts for a human to annotate and send feedback on. Use whenever building, styling, or reviewing any Crux Editor surface - editor chrome, annotation UI, artifact templates, mocks, or marketing - and whenever deciding how Crux should behave while a user is editing. Carries the locked design philosophy, the Duolingo-derived visual language, and a cited evidence base. This is not Lavish Editor; use lavish-design for that.
+description: Design system and interaction principles for Crux Editor, DJ's in-browser agentic editor that opens agent-generated HTML artifacts for a human to annotate and send feedback on. Use whenever building, styling, or reviewing any Crux Editor surface - editor chrome, annotation UI, artifact templates, mocks, or marketing - and whenever deciding how Crux should behave while a user is editing. Carries the locked design philosophy, the Duolingo-derived visual language, brand assets, and a cited evidence base.
 user-invocable: true
 ---
 
 Read `colors_and_type.css` for the visual language and `references/evidence.md` for how the
-editor should behave. The sibling `../lavish-design/` skill holds inherited structure only - see
-the migration status below before applying anything from it.
+editor should behave. The sibling `../crux-design/` skill holds the component kit and specimen
+cards, already themed with these tokens.
 
 If creating visual artifacts (slides, mocks, throwaway prototypes), copy assets out and create
 static HTML files for the user to view. If working on production code, copy assets and read the
@@ -26,22 +26,19 @@ is wrong.
 One thing "simple" explicitly does **not** license: hiding uncertainty. Fewer competing elements
 on screen, never fewer caveats. See `references/evidence.md` §3.2.
 
-## Status: partially migrated
+## Where things live
 
-This repository is a fork of `kunchenguid/lavish-axi`, and Crux Editor currently does what
-Lavish Editor does.
-
-**Migrated.** `colors_and_type.css` is Crux's own, Duolingo-derived, with light and dark
-themes. Color values marked `[v]` in that file were extracted from Duolingo's shipped production
-bundle rather than reproduced from memory; `[i]` marks the few that are inferred. Use this file.
-
-**Not migrated.** `../lavish-design/preview/` and `../lavish-design/ui_kits/editor/` still render
-Lavish's dark-ink-and-brass palette and reference Lavish token names. They are structurally
-useful - Crux has the same two-pane shape - but do not copy their color decisions.
-
-**Brand assets.** `assets/crux-wordmark.svg` and `assets/crux-mark.svg` are Crux's own. Do not
-reuse Lavish's wordmark or mark; those are the upstream project's trademarks, and the MIT license
-this fork inherits grants copyright permission, not trademark rights.
+- `colors_and_type.css` - the token system. Light + dark. Source of truth for color, type,
+  spacing, radii, and the press-down button. Color values marked `[v]` were extracted from
+  Duolingo's shipped production bundle rather than reproduced from memory; `[i]` marks the few
+  that are inferred.
+- `assets/` - `crux-wordmark.svg` (outlined Fredoka, accent X) and `crux-mark.svg` (square icon)
+- `references/evidence.md` - **cited** interaction principles: artifact trustworthiness, response
+  time budgets, direct manipulation, interruption cost, and the two places evidence conflicts
+  with our locked decisions. Read this before making behavioral decisions. Every claim carries a
+  confidence label and a verified DOI.
+- `../crux-design/preview/` - specimen cards, one concept per card
+- `../crux-design/ui_kits/editor/` - clickable React recreation of the editor chrome
 
 ## The wordmark
 
@@ -62,19 +59,6 @@ favicon, avatar, and app icon, where a wordmark cannot fit. It stays legible at 
 grayscale, which the accent-X wordmark also survives because the letterforms carry it without
 colour.
 
-## Where things live
-
-- `colors_and_type.css` - Crux's token system. Light + dark. The source of truth for color,
-  type, spacing, radii, and the press-down button.
-- `assets/` - crux-wordmark.svg (outlined Fredoka, accent X) and crux-mark.svg (square icon)
-- `references/evidence.md` - **cited** interaction principles: artifact trustworthiness, response
-  time budgets, direct manipulation, interruption cost, and the two places evidence conflicts
-  with our locked decisions. Read this before making behavioral decisions. Every claim carries a
-  confidence label and a verified DOI.
-- `../lavish-design/preview/` - specimen cards, inherited, still Lavish-colored
-- `../lavish-design/ui_kits/editor/` - clickable React recreation of the editor chrome.
-  Structurally useful; visually inherited.
-
 ## Typography is a substitution, and that is not optional
 
 Duolingo's own faces are `feather` (display) and `duolingo-sans` (UI), both confirmed from their
@@ -85,9 +69,7 @@ price, and their UI face descends from a commercial rounded DIN.
 the SIL Open Font License. Do not "correct" this by naming the real faces - they will not load,
 will silently fall back, and will shift every layout on the machines that happen to have them.
 
-Crux has no wordmark or brand mark yet. Do not reuse Lavish's - those are the upstream
-project's trademarks, and the MIT license this fork inherits grants copyright permission, not
-trademark rights.
+There is no serif in this system. Fredoka carries the brand moments a serif would have.
 
 ## Non-negotiable accessibility rule
 
@@ -95,20 +77,18 @@ trademark rights.
 second channel - an icon, a position, or a word. Any state distinguishable only by hue is a
 defect.
 
-This survives the Duolingo migration. Duolingo's green-correct/red-incorrect pairing is exactly
-the red/green contrast that fails for roughly 8% of men with protanopia or deuteranopia, and it
-is explicitly prohibited by the figure checklist this project adopted. Redundant color is fine;
-load-bearing color is not. See `references/evidence.md` §3.1.
+Duolingo's green-correct/red-incorrect pairing is exactly the red/green contrast that fails for
+roughly 8% of men with protanopia or deuteranopia, and it is explicitly prohibited by the figure
+checklist this project adopted. Redundant color is fine; load-bearing color is not. See
+`references/evidence.md` §3.1.
 
-## Inherited rules of thumb, and which are now dead
+## Two rules the philosophy killed
 
-The seven rules in `../lavish-design/SKILL.md` are Lavish's. Two are now definitively superseded:
+Both came from the design system this one grew out of, and both are dead:
 
-- "No emoji. No exclamation marks." conflicts with **friendly**. Dead.
-- "Shadows only on floating surfaces. Never on buttons." is dead. The press-down button shadow
+- "No emoji. No exclamation marks." conflicts with **friendly**.
+- "Shadows only on floating surfaces. Never on buttons." The press-down button shadow
   (`--btn-depth`) is Crux's defining affordance, and `.crux-btn` depends on it.
-
-Check any remaining inherited rule against the locked philosophy before applying it.
 
 ## To produce a new HTML artifact
 
@@ -116,7 +96,8 @@ Check any remaining inherited rule against the locked philosophy before applying
    standalone).
 2. Put `class="crux"` on the body, or `.crux-root` on your wrapper.
 3. Build with the semantic vars (`--bg`, `--fg`, `--accent`, `--danger`, ...) - never hard-code
-   hex. Every alias resolves in both themes; a hard-coded hex will not.
+   hex. Every alias resolves in both themes; a hard-coded hex will not. This is not style advice:
+   palette-independent aliases are what let this entire design system be re-themed mechanically.
 4. Dark mode follows the OS automatically. Pin it with `data-theme="dark"` or `data-theme="light"`
    on `<html>` only when the artifact genuinely needs one.
 5. Use `.crux-btn` for actions and `.crux-status--*` for state. The status classes carry a
@@ -124,6 +105,5 @@ Check any remaining inherited rule against the locked philosophy before applying
 6. Every interactive target gets a generous hit area - large targets are both friendlier and
    measurably faster to acquire (`references/evidence.md` §2.3). `--btn-h-md` is 48px for a
    reason.
-7. If you need a component shape (pill, bubble, annotation card, top bar), open the matching JSX
-   file in `../lavish-design/ui_kits/editor/` for the structure, then re-color it with Crux
-   tokens.
+7. If you need a component (pill, bubble, annotation card, top bar), open the matching JSX file in
+   `../crux-design/ui_kits/editor/` and copy the styles object - they are already token-driven.

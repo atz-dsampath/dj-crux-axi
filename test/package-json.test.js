@@ -29,11 +29,11 @@ test("published package includes the installable skill", async () => {
   assert.ok(packageJson.files.includes("skills/crux-axi"));
 });
 
-test("lavish-design agent skill is marked internal for skills CLI discovery", async () => {
-  const skillMd = await readFile(new URL("../.agents/skills/lavish-design/SKILL.md", import.meta.url), "utf8");
+test("crux-design agent skill is marked internal for skills CLI discovery", async () => {
+  const skillMd = await readFile(new URL("../.agents/skills/crux-design/SKILL.md", import.meta.url), "utf8");
   const frontmatter = skillMd.slice(4, skillMd.indexOf("\n---\n", 4));
 
-  assert.match(frontmatter, /^name: lavish-design$/m);
+  assert.match(frontmatter, /^name: crux-design$/m);
   assert.match(frontmatter, /^metadata:\n {2}internal: true$/m);
 });
 
