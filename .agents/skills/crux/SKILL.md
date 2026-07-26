@@ -55,6 +55,39 @@ Three things about the sound that are deliberate, not incidental:
   puts user control and freedom among the heuristics this project follows. Give the user a visible
   toggle wherever the sound is used; never make them hunt for silence.
 
+## The ten principles
+
+These govern every artifact and every surface. They are the review criteria: before handing
+something over, walk this list. Where a principle has empirical backing rather than only
+judgement, the source is named - those are not preferences and should not be traded away.
+
+1. **Anchor to the goal.** State the user's task and desired action, and optimise for that, not
+   for more features.
+2. **Data, then meaning, then next step.** Never show information without answering "so what do I
+   do?"
+3. **One focal point per view.** If you cannot name it in a sentence, redesign it.
+4. **Show, don't tell.** Swap dense text, tables and forms for visuals when a glance conveys it.
+5. **Cut load.** Remove, group, or defer the non-essential. Strong hierarchy so the eye finds the
+   key thing in about a second. _(`references/evidence.md` §2.4 - extraneous load consumes working
+   memory the user needs for the actual task.)_
+6. **Make the next step easy.** Clear primary CTA, smart defaults, minimal input, visible status
+   and feedback. _(§2.1 for the response-time budgets that make status feel immediate, §2.6 for
+   visibility of system status.)_
+7. **Be honest.** Accurate labels and scales. No dark patterns, no misleading visuals. _(§1.1 -
+   polish alone measurably raises perceived credibility, so an artifact that looks finished must
+   not thereby look verified. §1.2 - show uncertainty and name which kind.)_
+8. **Be accessible.** Contrast, legible type, keyboard and screen reader, never colour alone.
+   _(The non-negotiable rule above, and §3.1.)_
+9. **Let users explore.** Filter, drill down, preview, so they reach their own conclusions. _(§3.2
+   - this is how "simple" and "show more, hide less" are reconciled: simple by default, the full
+   picture on demand.)_
+10. **Verify.** Re-check against the goal. Faster, fewer errors, clear outcome? If not, iterate.
+
+Two of these pull against each other on purpose. **3 (one focal point)** and **9 (let users
+explore)** are resolved by progressive disclosure, not by picking a side: one obvious thing on
+arrival, depth available when asked for. And **5 (cut load)** never licenses cutting uncertainty -
+fewer competing elements, never fewer caveats.
+
 ## Where things live
 
 - `colors_and_type.css` - the token system. Light + dark. Source of truth for color, type,
@@ -123,6 +156,9 @@ Both came from the design system this one grew out of, and both are dead:
 
 ## To produce a new HTML artifact
 
+Start by naming the user's task and the action you want them to take. If you cannot write that in
+one sentence, you are not ready to build - principle 1, and everything else depends on it.
+
 1. `@import "colors_and_type.css";` in your stylesheet (or copy the tokens block inline if
    standalone).
 2. Put `class="crux"` on the body, or `.crux-root` on your wrapper.
@@ -138,3 +174,10 @@ Both came from the design system this one grew out of, and both are dead:
    reason.
 7. If you need a component (pill, bubble, annotation card, top bar), open the matching JSX file in
    `ui_kits/editor/` and copy the styles object - they are already token-driven.
+
+Before handing it over, walk the ten principles against what you actually built - that is
+principle 10, and it is the step most likely to be skipped. Three questions catch most failures:
+
+- Can you name the one focal point in a sentence?
+- Does every number carry its uncertainty, and every state a channel besides colour?
+- Is the next action obvious without reading the whole page?
