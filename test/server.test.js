@@ -322,8 +322,8 @@ test("annotation card title renders selected tag as an html element name", () =>
 test("annotation card shadow styles use Crux design-system variables", () => {
   const js = createSdkJs("abc");
 
-  assert.match(js, /--ink-900:#0f1115/);
-  assert.match(js, /--accent:#f4c95d/);
+  assert.match(js, /--canvas:#131f24/);
+  assert.match(js, /--accent:#93d333/);
   assert.match(js, /--font-sans:/);
   assert.match(js, /font-family:var\(--font-sans\)/);
   assert.match(js, /:focus-visible\{outline:2px solid var\(--accent\);outline-offset:2px/);
@@ -351,9 +351,12 @@ test("annotate switch shows a brass track and ink knob when enabled", async () =
 test("chrome declares the Crux design-system tokens", async () => {
   const css = await chromeCssSource();
 
-  assert.match(css, /--ink-900:#0f1115/);
-  assert.match(css, /--cream-100:#f7f3ea/);
-  assert.match(css, /--brass-500:#f4c95d/);
+  assert.match(css, /--canvas:#131f24/);
+  assert.match(css, /--eel-dark:#f1f7fb/);
+  assert.match(css, /--owl-dark:#93d333/);
+  assert.match(css, /--tree-frog:#58a700/);
+  // The chrome must not carry the palette this project forked away from.
+  assert.doesNotMatch(css, /#f4c95d|--brass-|--ink-900/);
   assert.match(css, /--font-serif:/);
   assert.match(css, /--font-sans:/);
   assert.match(css, /--text-display:92px/);
@@ -369,11 +372,13 @@ test("chrome declares the Crux design-system tokens", async () => {
 test("artifact SDK uses design-token aliases for annotation highlight and shadow UI", () => {
   const js = createSdkJs("abc");
 
-  assert.match(js, /--crux-accent:#f4c95d/);
-  assert.match(js, /--crux-annotate-outline:2px solid var\(--crux-accent\)/);
-  assert.match(js, /el\.style\.outline\s*=\s*["']var\(--crux-annotate-outline,2px solid #f4c95d\)["']/);
+  // The outline is drawn over the user's own artifact, so it is the most visible
+  // colour Crux owns. It must be the accent, never the forked-from brass.
+  assert.match(js, /--crux-accent:#58cc02/);
+  assert.match(js, /--crux-annotate-outline:3px solid var\(--crux-accent\)/);
+  assert.match(js, /el\.style\.outline\s*=\s*["']var\(--crux-annotate-outline,3px solid #58cc02\)["']/);
   assert.match(js, /el\.style\.outlineOffset\s*=\s*["']var\(--crux-annotate-offset,2px\)["']/);
-  assert.match(js, /--fg-faint:var\(--steel-300\)/);
+  assert.match(js, /--fg-faint:var\(--hare-dark\)/);
   assert.match(js, /textarea::placeholder\{color:var\(--fg-faint\)\}/);
   assert.doesNotMatch(js, /placeholder\{color:#aeb6c6\}/);
 });
@@ -382,7 +387,7 @@ test("chrome uses the annotation outline as the keyboard focus outline", async (
   const css = await chromeCssSource();
 
   assert.match(css, /:focus-visible\{outline:var\(--annotate-outline\);outline-offset:var\(--annotate-offset\)/);
-  assert.match(css, /--annotate-outline:2px solid var\(--accent\)/);
+  assert.match(css, /--annotate-outline:3px solid var\(--accent\)/);
   assert.match(css, /--annotate-offset:2px/);
 });
 
@@ -1470,7 +1475,7 @@ test("/chrome.css serves the extracted chrome stylesheet", async () => {
 
     assert.equal(res.status, 200);
     assert.match(res.headers.get("content-type") || "", /text\/css/);
-    assert.match(normalizeCssForAssertions(body), /--ink-900:#0f1115/);
+    assert.match(normalizeCssForAssertions(body), /--canvas:#131f24/);
     assert.match(
       normalizeCssForAssertions(body),
       /\.layout\{[^}]*grid-template-columns:minmax\(0,1fr\) ?var\(--panel-w\)/,
@@ -2822,7 +2827,9 @@ test("ended session shows an overlay card over the dimmed chrome", async () => {
   assert.match(html, /class="ended-copy">\/tmp\/artifact\.html</);
   assert.doesNotMatch(html, /The agent polling loop can stop\./);
   assert.match(css, /\.ended-overlay\{[^}]*inset:var\(--bar-h\) 0 0 0/);
-  assert.match(css, /\.ended-overlay\{[^}]*background:rgba\(15,17,21,.86\)/);
+  // The scrim is the Crux canvas at 86%, not a literal chosen here. It must stay tied
+  // to the palette: an ink-coloured scrim over a green-accented chrome reads as a bug.
+  assert.match(css, /\.ended-overlay\{[^}]*background:rgba\(19,31,36,.86\)/);
   assert.match(css, /\.ended-title\{[^}]*font-family:var\(--font-serif\)/);
   assert.match(js, /endedOverlay\.hidden = false/);
   assert.match(js, /annotationSwitch\.disabled = true/);

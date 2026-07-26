@@ -1,51 +1,55 @@
 :root {
-  --ink-900: #0f1115;
-  --ink-800: #11141a;
-  --ink-700: #171a21;
-  --ink-600: #1c212b;
-  --steel-700: #2a2f3a;
-  --steel-600: #303745;
-  --steel-500: #3c4557;
-  --steel-400: #8c96aa;
-  --steel-300: #aeb6c6;
-  --steel-200: #b9c0cf;
-  --steel-100: #d8deea;
-  --cream-50: #fffbf3;
-  --cream-100: #f7f3ea;
-  --cream-200: #e8e1cf;
-  --brass-500: #f4c95d;
-  --brass-400: #ffd877;
-  --brass-ink: #17130a;
-  --sage-900: #172419;
-  --sage-700: #315f3a;
-  --sage-300: #8fe39e;
-  --amber-900: #25230f;
-  --amber-700: #5d4d1b;
-  --rust-500: #f06464;
-  --bg: var(--ink-900);
-  --bg-panel: var(--ink-800);
-  --bg-bar: var(--ink-700);
-  --bg-elevated: var(--ink-600);
-  --fg: var(--cream-100);
-  --fg-muted: var(--steel-100);
-  --fg-dim: var(--steel-200);
-  --fg-faint: var(--steel-300);
-  --fg-label: var(--steel-400);
-  --border: var(--steel-600);
-  --border-subtle: var(--steel-700);
-  --border-strong: var(--steel-500);
-  --accent: var(--brass-500);
-  --accent-hover: var(--brass-400);
-  --accent-ink: var(--brass-ink);
-  --danger: var(--rust-500);
-  --font-serif: "EB Garamond", "Iowan Old Style", Georgia, serif;
-  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Crux palette. Values marked [v] were extracted from Duolingo's shipped
+     production bundle rather than reproduced from memory. The editor chrome
+     stays dark so it frames a light artifact rather than blending into it.
+     Semantic aliases below keep their names, which is what lets the rest of
+     this stylesheet re-theme without being touched. */
+  --owl: #58cc02; /* [v] */
+  --owl-dark: #93d333; /* [v] */
+  --tree-frog: #58a700; /* [v] darker green - the button underside */
+  --macaw: #1cb0f6; /* [v] */
+  --macaw-dark: #49c0f8; /* [v] */
+  --cardinal: #ff4b4b; /* [v] */
+  --cardinal-dark: #ee5555; /* [v] */
+  --fox: #ff9600; /* [v] */
+  --polar-dark: #202f36; /* [v] */
+  --orca-dark: #37464f; /* [v] */
+  --koala-dark: #485a62; /* [v] */
+  --hare-dark: #52656d; /* [v] */
+  --wolf-dark: #dce6ec; /* [v] */
+  --eel-dark: #f1f7fb; /* [v] */
+  --canvas: #131f24; /* [i] the dark canvas below polar-dark */
+
+  --bg: var(--canvas);
+  --bg-panel: var(--polar-dark);
+  --bg-bar: var(--polar-dark);
+  --bg-elevated: var(--orca-dark);
+  --fg: var(--eel-dark);
+  --fg-muted: var(--wolf-dark);
+  --fg-dim: var(--wolf-dark);
+  --fg-faint: var(--hare-dark);
+  --fg-label: var(--hare-dark);
+  --border: var(--koala-dark);
+  --border-subtle: var(--orca-dark);
+  --border-strong: var(--hare-dark);
+  --accent: var(--owl-dark);
+  --accent-hover: #9fe437;
+  --accent-press: var(--tree-frog);
+  --accent-ink: var(--canvas);
+  --info: var(--macaw-dark);
+  --danger: var(--cardinal-dark);
+  --danger-press: #d94545;
+  /* feather and duolingo-sans are proprietary; Nunito and Fredoka are the OFL
+     substitutes. Do not name the real faces - they will not load. */
+  --font-sans: Nunito, ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  --font-display: Fredoka, Nunito, ui-rounded, system-ui, sans-serif;
+  --font-serif: var(--font-display);
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --text-xs: 12px;
   --lh-xs: 1.35;
   --text-sm: 13px;
   --lh-sm: 1.4;
-  --text-base: 14px;
+  --text-base: 15px;
   --lh-base: 1.45;
   --text-md: 16px;
   --lh-md: 1.5;
@@ -67,7 +71,8 @@
   --w-medium: 500;
   --w-semi: 600;
   --w-bold: 700;
-  --w-brand: 750;
+  --w-brand: 900;
+  --w-heavy: 800;
   --track-tight: -0.01em;
   --track-normal: 0;
   --track-brand: 0.02em;
@@ -87,9 +92,9 @@
   --space-24: 48px;
   --space-32: 64px;
   --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 14px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
   --hairline: 1px solid var(--border);
   --hairline-subtle: 1px solid var(--border-subtle);
@@ -98,10 +103,11 @@
   --bar-h: 56px;
   --panel-w: 360px;
   --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
-  --dur-fast: 120ms;
+  --btn-depth: 5px;
+  --dur-fast: 100ms;
   --dur: 180ms;
   --dur-slow: 320ms;
-  --annotate-outline: 2px solid var(--accent);
+  --annotate-outline: 3px solid var(--accent);
   --annotate-offset: 2px;
 }
 * {
@@ -234,7 +240,7 @@ body.crux {
 .more-button:hover:not(:disabled),
 .more-button[aria-expanded="true"] {
   border-color: var(--border-strong);
-  background: var(--steel-700);
+  background: var(--bg-elevated);
   color: var(--fg);
 }
 .more-button:disabled {
@@ -286,7 +292,7 @@ body.crux {
   color: var(--fg-muted);
 }
 .menu-file:hover {
-  background: var(--steel-700);
+  background: var(--bg-elevated);
 }
 .menu-file > svg {
   opacity: 0.7;
@@ -358,7 +364,7 @@ body.crux {
   color: var(--fg);
 }
 .menu-item:hover:not(:disabled) {
-  background: var(--steel-700);
+  background: var(--bg-elevated);
 }
 .menu-item:disabled {
   cursor: not-allowed;
@@ -375,33 +381,39 @@ body.crux {
   opacity: 1;
 }
 .menu-item.danger:hover:not(:disabled) {
-  background: rgba(240, 100, 100, 0.1);
+  background: rgba(238, 85, 85, 0.14);
 }
 .button {
   border: 0;
   border-radius: var(--radius-md);
-  padding: 9px 14px;
+  padding: 10px 16px;
   background: var(--accent);
   color: var(--accent-ink);
   font-family: inherit;
   font-size: var(--text-sm);
-  font-weight: var(--w-bold);
+  font-weight: var(--w-heavy);
+  letter-spacing: 0.02em;
   white-space: nowrap;
   cursor: pointer;
+  box-shadow: 0 var(--btn-depth) 0 var(--accent-press);
   transition:
-    background 120ms ease-out,
-    color 120ms ease-out,
-    opacity 120ms ease-out,
-    border-color 120ms ease-out;
+    filter var(--dur-fast) var(--ease),
+    box-shadow 60ms var(--ease),
+    transform 60ms var(--ease);
 }
 .button:hover:not(:disabled) {
-  background: var(--accent-hover);
+  filter: brightness(1.08);
 }
+/* The press-down. Depth is a box-shadow rather than a border-bottom: a border
+   adds height, so the top bar would twitch on every press. A shadow occupies no
+   space, so only the button moves, and it travels exactly its own depth. */
 .button:active:not(:disabled) {
-  opacity: 0.85;
+  transform: translateY(var(--btn-depth));
+  box-shadow: 0 0 0 var(--accent-press);
 }
 .button:disabled {
   opacity: 0.55;
+  box-shadow: none;
   cursor: not-allowed;
 }
 .button-danger {
@@ -410,9 +422,13 @@ body.crux {
   gap: 8px;
   background: transparent;
   color: var(--danger);
+  box-shadow: none;
+}
+.button-danger:active:not(:disabled) {
+  transform: none;
 }
 .button-danger:hover:not(:disabled) {
-  background: rgba(240, 100, 100, 0.1);
+  background: rgba(238, 85, 85, 0.14);
 }
 .button-danger > svg {
   flex-shrink: 0;
@@ -424,7 +440,7 @@ body.crux {
   display: grid;
   place-items: center;
   padding: var(--space-16);
-  background: rgba(15, 17, 21, 0.72);
+  background: rgba(19, 31, 36, 0.72);
 }
 .share-overlay[hidden] {
   display: none;
@@ -873,7 +889,7 @@ body.crux {
 .ended-overlay {
   position: fixed;
   inset: var(--bar-h) 0 0 0;
-  background: rgba(15, 17, 21, 0.86);
+  background: rgba(19, 31, 36, 0.86);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -915,10 +931,10 @@ body.crux {
   left: var(--space-8);
   right: var(--space-8);
   z-index: 20;
-  border: 1px solid rgba(244, 201, 93, 0.35);
+  border: 1px solid rgba(147, 211, 51, 0.35);
   border-radius: var(--radius-lg);
-  background: rgba(37, 35, 15, 0.92);
-  color: var(--brass-400);
+  background: rgba(55, 70, 79, 0.92);
+  color: var(--accent-hover);
   padding: var(--space-6) var(--space-8);
   font-size: var(--text-sm);
   line-height: var(--lh-sm);
@@ -974,7 +990,7 @@ body.layout-gate-active iframe#artifact {
 .whiteboard-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 17, 21, 0.92);
+  background: rgba(19, 31, 36, 0.92);
   z-index: 80;
   display: flex;
 }
