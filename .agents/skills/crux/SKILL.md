@@ -26,12 +26,43 @@ is wrong.
 One thing "simple" explicitly does **not** license: hiding uncertainty. Fewer competing elements
 on screen, never fewer caveats. See `references/evidence.md` §3.2.
 
+## The button is the signature component
+
+`.crux-btn` sits on a solid bottom edge and drops onto it when pressed. Two rules keep it right:
+
+- **The depth is a `box-shadow`, never a `border-bottom`.** A border adds to the element's height,
+  so the surrounding layout twitches every time a button depresses. A shadow occupies no space, so
+  only the button moves. `--btn-depth` is 5px.
+- **It presses by `translateY(var(--btn-depth))` while the shadow collapses to 0.** The button
+  travels exactly as far as its own edge, so it looks like it is being pushed into the page rather
+  than shrinking.
+
+Buttons also make a sound. `sound.js` synthesises it with Web Audio rather than shipping an audio
+file, because an `.mp3` breaks the moment an artifact is exported or opened standalone - which is
+when a Crux artifact is most likely to travel.
+
+```js
+import { attachClickSound } from "./sound.js";
+attachClickSound(); // every .crux-btn on the page
+```
+
+Three things about the sound that are deliberate, not incidental:
+
+- It fires on `pointerdown`, not `click`. A sound on release feels detached from the press that
+  caused it.
+- The tone glides downward. A flat tone reads as a beep; a falling one reads as a pop.
+- It is **opt-out and remembered**. Unexpected audio is hostile, and `references/evidence.md` §2.6
+  puts user control and freedom among the heuristics this project follows. Give the user a visible
+  toggle wherever the sound is used; never make them hunt for silence.
+
 ## Where things live
 
 - `colors_and_type.css` - the token system. Light + dark. Source of truth for color, type,
   spacing, radii, and the press-down button. Color values marked `[v]` were extracted from
   Duolingo's shipped production bundle rather than reproduced from memory; `[i]` marks the few
   that are inferred.
+- `sound.js` - the click sound, synthesised with Web Audio. `attachClickSound()` wires every
+  `.crux-btn`; no audio file, so artifacts stay portable when exported.
 - `assets/` - `crux-wordmark.svg` (outlined Fredoka, accent X) and `crux-mark.svg` (square icon)
 - `references/evidence.md` - **cited** interaction principles: artifact trustworthiness, response
   time budgets, direct manipulation, interruption cost, and the two places evidence conflicts

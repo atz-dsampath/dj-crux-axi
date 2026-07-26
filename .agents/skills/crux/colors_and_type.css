@@ -157,7 +157,7 @@
   /* Duolingo's defining affordance: a solid face sitting on a darker
      underside that collapses when pressed. This is why the inherited
      earlier rule that buttons never carry shadows had to go. */
-  --btn-depth:     4px;
+  --btn-depth:       5px; /* the bottom edge the button drops onto when pressed */
   --btn-depth-press: 0px;
   --btn-h-sm:  32px; /* [v] */
   --btn-h-md:  48px; /* [v] */
