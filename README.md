@@ -12,12 +12,6 @@
   <a href="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue?style=flat-square"
     ><img alt="Platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue?style=flat-square"
   /></a>
-  <a href="https://x.com/kunchenguid"
-    ><img alt="X" src="https://img.shields.io/badge/X-@kunchenguid-black?style=flat-square"
-  /></a>
-  <a href="https://discord.gg/Wsy2NpnZDu"
-    ><img alt="Discord" src="https://img.shields.io/discord/1439901831038763092?style=flat-square&label=discord"
-  /></a>
 </p>
 
 <h3 align="center">For when a rich editor is not rich enough.</h3>
@@ -231,3 +225,20 @@ pnpm run lint           # Run ESLint
 pnpm run format:check   # Check Prettier formatting
 pnpm run typecheck      # Run TypeScript checkJs validation
 ```
+
+## Credits
+
+Crux Editor is a fork of [Lavish Editor](https://github.com/kunchenguid/lavish-axi) by
+[Kun Chen](https://github.com/kunchenguid), and it exists because that project existed first.
+
+The hard parts are his. The local server that serves an artifact into a sandboxed iframe, the
+element and text-range annotation model, the long-polling loop that carries a human's feedback
+back to an agent, the Mermaid-to-Excalidraw whiteboard, the self-contained export - that
+architecture is Lavish's design, and Crux inherits it nearly whole.
+
+What Crux changes is the surface: a different visual language, a different product direction, and
+its own brand. If you want the original, and you should look at it, it is
+[`lavish-axi`](https://www.npmjs.com/package/lavish-axi).
+
+Lavish Editor is MIT licensed. That license and its copyright notice are retained in full in
+[LICENSE](./LICENSE).
